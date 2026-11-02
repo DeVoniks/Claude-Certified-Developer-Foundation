@@ -1,0 +1,695 @@
+{
+  "exam_title": "CCDV-F Full Practice Exam 5",
+  "total_questions": 53,
+  "questions": [
+    {
+      "number": 1,
+      "question": "An application team is preparing a Claude API integration for launch traffic. Which TWO approaches correctly reflect how the API rate-limits requests?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Plan capacity around both the requests-per-minute and the token-throughput limits defined by the organization's usage tier.",
+        "B": "Expect tier placement to advance automatically with usage, and request higher limits through the Console when the tier binds.",
+        "C": "Issue additional API keys for the same organization so that each key receives its own independent throughput allowance.",
+        "D": "Estimate throttling risk from call count alone, since prompt and response size have no effect on how quickly quota is consumed."
+      },
+      "correct_answers": ["A", "B"],
+      "explanation": "Rate limits include both requests-per-minute and token-throughput limits based on the organization's usage tier (A). Tier placement advances with usage, and higher limits can be requested through the Console (B). Multiple keys share the same org-level limits (C is wrong), and token size affects quota consumption (D is wrong)."
+    },
+    {
+      "number": 2,
+      "question": "A long-running agentic conversation is approaching the context window limit, and the team plans to rely on compaction to keep the task going. Which TWO actions are appropriate?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Prefer server-side compaction unless the integration specifically needs client-side control over the summarization step.",
+        "B": "Let compaction summarize the earlier conversation history and continue the task from that summary in place of the full history.",
+        "C": "Configure compaction to drop the oldest tool results one at a time while leaving every other block of the history untouched.",
+        "D": "Keep the full uncompacted history resident in the window after compaction so Claude can re-read any earlier turn on demand."
+      },
+      "correct_answers": ["A", "B"],
+      "explanation": "Server-side compaction is preferred unless client-side control is needed (A), and compaction works by summarizing earlier history to continue the task (B). Compaction is not the same as tool result clearing (C), and the whole point is to replace the full history with a summary (D is wrong)."
+    },
+    {
+      "number": 3,
+      "question": "A team submits 5,000 product reviews for sentiment labeling as a single Message Batch. When the batch completes, they join each result to its source review by its line position in the results file, and some labels land on the wrong reviews. What should they change?",
+      "type": "single_select",
+      "options": {
+        "A": "Join each result to its review using the custom_id echoed in the result rather than its position.",
+        "B": "Embed a review number in every prompt and instruct Claude to repeat it at the start of its answer.",
+        "C": "Split the workload into several smaller batches so that each batch preserves submission order.",
+        "D": "Move the workload to synchronous Messages API calls so responses come back in request order."
+      },
+      "correct_answer": "A",
+      "explanation": "The Message Batches API does not guarantee result order. Each result echoes the custom_id from its request, which should be used to match results back to their source reviews."
+    },
+    {
+      "number": 4,
+      "question": "A lead agent delegates a dependency audit to a subagent, which inspects dozens of manifest files but reports back only that four outdated packages were found. Which change lets the lead name the packages while preserving the context isolation that justified delegating?",
+      "type": "single_select",
+      "options": {
+        "A": "Have the subagent's prompt require the package names and file paths in its final report to the lead.",
+        "B": "Raise the lead agent's max_tokens so its final answer has room to list every outdated package.",
+        "C": "Have the lead agent reread every manifest file itself after the subagent returns its summary.",
+        "D": "Move the subagent to a model with a larger context window so its findings fit in the lead's context."
+      },
+      "correct_answer": "A",
+      "explanation": "The simplest fix is to specify in the subagent's prompt what information to include in its report. This preserves context isolation while ensuring the lead gets the specific details (package names and file paths) it needs."
+    },
+    {
+      "number": 5,
+      "question": "A developer adds Anthropic's web_search tool to an existing agent loop that already runs client-defined tools. The loop is written to execute every tool request it receives and return a tool_result. How should the loop treat web_search requests?",
+      "type": "single_select",
+      "options": {
+        "A": "Route any turn that requests web_search to the Message Batches API, because search results are only delivered asynchronously once the batch finishes processing.",
+        "B": "Leave web_search to Anthropic's infrastructure; the search runs during the request and its results arrive in the response, so the loop sends no tool_result for it.",
+        "C": "Implement a search function client-side, run it whenever a web_search server_tool_use block appears in the response, and return the fetched results in a tool_result block on the next turn.",
+        "D": "Redefine web_search as a custom tool with its own input_schema so the loop can dispatch it through the same handler it already uses for client-defined tools."
+      },
+      "correct_answer": "B",
+      "explanation": "web_search is a server tool executed by Anthropic's infrastructure during the request. The results arrive in the response automatically, so the application loop should not attempt to execute it or return a tool_result for it."
+    },
+    {
+      "number": 6,
+      "question": "A team building a Claude-based document summarizer began writing and iterating prompts on the first day, judging quality by informal impressions. Weeks later, nobody can say whether the summaries are good enough because no definition of success was ever agreed. Which systems life cycle activity was skipped?",
+      "type": "single_select",
+      "options": {
+        "A": "Implementation writing the prompt and the Messages API integration code.",
+        "B": "Operations and maintenance tracking production cost and quality dashboards.",
+        "C": "Requirements analysis defining measurable success criteria for the summaries.",
+        "D": "System design selecting the model, API mode, and prompt structure."
+      },
+      "correct_answer": "C",
+      "explanation": "Requirements analysis defines measurable success criteria before implementation begins. Without agreed-upon criteria, there's no way to evaluate whether the summaries meet expectations."
+    },
+    {
+      "number": 7,
+      "question": "An Agent SDK application defines a read-only code-reviewer subagent programmatically and runs with permission_mode set to dontAsk and allowed_tools set to Read, Grep, and Glob. Logs show Claude tries to delegate, but every Agent tool call is denied. What resolves this?",
+      "type": "single_select",
+      "options": {
+        "A": "Add Agent to the allowed_tools list so subagent invocations are auto-approved.",
+        "B": "Mention the subagent by name in the prompt so Claude invokes it explicitly.",
+        "C": "Set permission_mode to acceptEdits so tool calls no longer require approval.",
+        "D": "Add Agent to the subagent's own tools list so it is permitted to run as a subagent."
+      },
+      "correct_answer": "A",
+      "explanation": "With permission_mode dontAsk, only tools in allowed_tools are auto-approved. The Agent tool (for spawning subagents) must be in that list for delegation to work."
+    },
+    {
+      "number": 8,
+      "question": "A team using Claude Code notices that at the start of every new session, developers re-type the same build commands, test instructions, and naming conventions before Claude produces acceptable code. Which change fixes this for the whole team?",
+      "type": "single_select",
+      "options": {
+        "A": "Add the conventions under a claudeMd key in the project's .claude/settings.json file.",
+        "B": "Keep one Claude Code session open indefinitely so the earlier instructions remain in context.",
+        "C": "Ask Claude at the start of each session to remember the conventions so auto memory retains them.",
+        "D": "Commit a project CLAUDE.md containing the build, test, and naming conventions to the repository."
+      },
+      "correct_answer": "D",
+      "explanation": "A project-level CLAUDE.md committed to the repository loads automatically at the start of every session for every team member, ensuring consistent conventions without re-typing."
+    },
+    {
+      "number": 9,
+      "question": "A content pipeline has Claude produce a draft, critique it against fixed criteria, and then revise it. The team must log each intermediate output and be able to halt the process after the critique step. Which design satisfies these requirements?",
+      "type": "single_select",
+      "options": {
+        "A": "Spawn the draft and critique as parallel subagents and have a lead agent merge their outputs into the revision.",
+        "B": "Send one prompt asking the model to draft, critique, and revise within a single response, then log that whole response.",
+        "C": "Run the draft, critique, and revision as separate sequenced API calls, passing each output into the next call.",
+        "D": "Enable extended thinking so the critique takes place in thinking blocks, then log those blocks as the audit record."
+      },
+      "correct_answer": "C",
+      "explanation": "Separate sequential API calls allow logging each intermediate output and halting between steps. A single response doesn't allow halting, parallel subagents don't preserve sequence, and thinking blocks aren't designed for this."
+    },
+    {
+      "number": 10,
+      "question": "An extraction pipeline defines its tools with strict: true and asks Claude for a final JSON summary as plain text, which downstream code parses without validation. Summaries occasionally arrive missing a required field. Which change addresses this?",
+      "type": "single_select",
+      "options": {
+        "A": "Request the final summary through output_config.format with a JSON schema rather than through strict tools.",
+        "B": "Add strict: true to every remaining tool definition so the schema guarantee extends to the final response as well.",
+        "C": "Prefill the assistant turn with an opening brace so the model is forced to continue the summary as valid JSON.",
+        "D": "Raise max_tokens and restate the required field names in the system prompt so the model complies more often."
+      },
+      "correct_answer": "A",
+      "explanation": "strict: true only applies to tool inputs, not to the final text response. To enforce a JSON schema on the final response, use output_config.format with the desired schema."
+    },
+    {
+      "number": 11,
+      "question": "A developer is authoring an MCP server whose tools will be called by Claude through several different MCP clients. Which TWO server-side practices improve how reliably Claude uses those tools?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Define each tool's input schema as a root-level anyOf union so one tool accepts several argument shapes.",
+        "B": "Return the complete raw payload from every tool so the client never needs a follow-up call.",
+        "C": "Return failures as tool results flagged as errors, with a message describing what went wrong.",
+        "D": "Declare accurate tool annotations, such as readOnlyHint on tools that have no side effects."
+      },
+      "correct_answers": ["C", "D"],
+      "explanation": "Returning failures as error-flagged tool results with descriptive messages (C) helps Claude understand and recover from failures. Accurate tool annotations like readOnlyHint (D) help clients manage tool permissions appropriately."
+    },
+    {
+      "number": 12,
+      "question": "A coding assistant with file-edit tools receives requests such as \"Could you suggest some improvements to this module?\" Claude replies with a list of suggestions instead of editing the files, which is what users actually want. Which prompt change is recommended?",
+      "type": "single_select",
+      "options": {
+        "A": "Instruct Claude in the system prompt to implement changes by default rather than only suggesting them, and phrase requests as imperatives.",
+        "B": "Lower the temperature so Claude selects the file-edit tool more deterministically when code is under discussion.",
+        "C": "Duplicate the tool definitions inside the system prompt text so that Claude encounters the edit tool before it reads the user request.",
+        "D": "Raise max_tokens so Claude has enough output budget to both describe the improvements and then apply them to the files."
+      },
+      "correct_answer": "A",
+      "explanation": "The prompt should instruct Claude to implement changes rather than suggest them. Phrasing as imperatives ('Change this function' vs 'Could you suggest') produces action rather than suggestions."
+    },
+    {
+      "number": 13,
+      "question": "An application using adaptive thinking parses each response expecting a thinking block first, and it fails on some turns where the response contains only a text block. What is the accurate understanding of this behavior?",
+      "type": "single_select",
+      "options": {
+        "A": "Retry the request whenever the thinking block is absent, since the omission indicates the API dropped part of the response content.",
+        "B": "Treat the missing block as a truncated response and raise max_tokens so the thinking has room to complete before the text.",
+        "C": "Switch the request to a fixed budget_tokens configuration so that every response is forced to begin with a thinking block.",
+        "D": "Treat a response with no thinking block as valid, since adaptive thinking lets Claude decide per request whether to think."
+      },
+      "correct_answer": "D",
+      "explanation": "Adaptive thinking lets Claude decide whether to use extended thinking on each request. Some simple requests may not need it, so responses without thinking blocks are valid and expected."
+    },
+    {
+      "number": 14,
+      "question": "A stakeholder workshop for a Claude-based contract-review tool produces several statements. Before writing the requirements document, the team wants to separate genuine requirements from premature implementation decisions. Which statement is a requirement rather than a design choice?",
+      "type": "single_select",
+      "options": {
+        "A": "The service shall send contracts that arrive overnight through the Message Batches API for processing.",
+        "B": "The service shall pin production traffic to a specific dated Claude model snapshot at all times.",
+        "C": "Reviewers must receive a summary of flagged clauses for each uploaded contract within 90 seconds of upload.",
+        "D": "The service shall enable prompt caching on the shared clause-library portion of the system prompt."
+      },
+      "correct_answer": "C",
+      "explanation": "A requirement states what the system must achieve (deliver a summary within 90 seconds). The other options are implementation decisions about specific API usage, model pinning, or caching strategy."
+    },
+    {
+      "number": 15,
+      "question": "A custom tool takes a nested, format-sensitive input object, and Claude's calls sometimes fail validation in the application. Which TWO changes to the tool definition address this?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Move the schema into the system prompt as prose and remove input_schema from the tool definition.",
+        "B": "Add schema-valid examples in the input_examples field to show Claude the expected nested format.",
+        "C": "Raise max_tokens on the request so Claude has enough room to emit the complete nested input object.",
+        "D": "Set strict to true on the tool definition so tool calls must match the input_schema exactly."
+      },
+      "correct_answers": ["B", "D"],
+      "explanation": "input_examples show Claude the expected format for complex nested inputs (B), and strict: true enforces exact schema compliance on tool inputs (D). Moving the schema to prose removes validation, and max_tokens doesn't affect input format."
+    },
+    {
+      "number": 16,
+      "question": "A data-extraction service running on an older Claude model prefilled the assistant turn with an opening brace to force JSON output. After moving to Claude Sonnet 4.6, every request fails with a 400 error. Which adjustment is recommended?",
+      "type": "single_select",
+      "options": {
+        "A": "Move the opening brace to the end of the user message so Claude treats it as the start of its own reply and continues from it.",
+        "B": "Keep the prefilled assistant turn but follow it with a user message such as 'Continue' so the prefill is no longer the last turn.",
+        "C": "Remove the prefill and use the structured outputs feature, supplying a JSON schema that the response must conform to.",
+        "D": "Lower the temperature to zero and add retry logic that regenerates the response whenever the returned text fails to parse."
+      },
+      "correct_answer": "C",
+      "explanation": "Claude Sonnet 4.6+ does not support assistant response prefill. The structured outputs feature provides a proper way to enforce JSON output conforming to a schema."
+    },
+    {
+      "number": 17,
+      "question": "A developer is writing the error-classification layer for a Claude tool-use application. Which TWO practices correctly separate the different failure categories?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Branch on the typed SDK exception class or the error object's type field, not on the message string.",
+        "B": "Classify HTTP error responses as request-processing failures, and read stop_reason only from successful responses.",
+        "C": "Abort the loop with an exception when a tool's execution fails rather than returning a tool_result marked is_error.",
+        "D": "Treat stop_reason max_tokens as a transport failure and rely on the SDK's automatic retries to resolve it."
+      },
+      "correct_answers": ["A", "B"],
+      "explanation": "Branching on typed exception classes or error type fields (A) is more reliable than string matching. HTTP errors and stop_reason are separate concerns that should be handled in different layers (B). Tool failures should be returned as is_error results (C is wrong), and max_tokens is not a transport failure (D is wrong)."
+    },
+    {
+      "number": 18,
+      "question": "A team migrates a classification service from Claude Sonnet 4.6 to Claude Opus 5, leaving temperature set to 0.2 and top_p in the request body to keep outputs consistent. Every request now fails with a 400 error. What should the team change?",
+      "type": "single_select",
+      "options": {
+        "A": "Set temperature to exactly 0, since the newer model rejects only non-zero sampling parameter values.",
+        "B": "Route the requests through the Message Batches API, where the sampling parameters remain accepted.",
+        "C": "Enable adaptive thinking on the request, which restores support for the sampling parameters on the newer model.",
+        "D": "Remove the temperature and top_p fields from the request and guide output consistency through the prompt instead."
+      },
+      "correct_answer": "D",
+      "explanation": "Claude Opus 4.7+ models with thinking enabled do not support temperature and top_p sampling parameters. The team should remove them and use prompt instructions to guide consistency."
+    },
+    {
+      "number": 19,
+      "question": "A team's cost dashboard prices output_tokens correctly but computes input cost as usage.input_tokens times the base input price. After enabling prompt caching on a long shared system prompt, the dashboard's input totals fall far below the invoice. How should the team correct the input-side cost model?",
+      "type": "single_select",
+      "options": {
+        "A": "Sum input_tokens, cache_read_input_tokens, and cache_creation_input_tokens, each priced at its own multiplier.",
+        "B": "Add a fixed per-request cache storage fee to every response, since that charge never appears in the usage object.",
+        "C": "Price the cached prefix tokens at the output token rate, since cache hits are billed as output rather than input.",
+        "D": "Switch every request to streaming, since the usage object reports token counts only on streamed responses."
+      },
+      "correct_answer": "A",
+      "explanation": "With prompt caching, input_tokens only counts uncached tokens. The full cost requires summing input_tokens + cache_read_input_tokens + cache_creation_input_tokens, each at their respective rates."
+    },
+    {
+      "number": 20,
+      "question": "A developer is sizing the context budget for a tool-heavy agent built on the Messages API. Which TWO assumptions about the context window are correct?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Expect accuracy and recall to degrade as the window fills, so curate content rather than rely on headroom.",
+        "B": "Exclude cache-read tokens from the budget, since cached prefixes are not reprocessed on each request.",
+        "C": "Budget for tool definitions and every tool result, since both occupy the window alongside the system prompt.",
+        "D": "Ignore extended thinking tokens in the budget, since they are billed as output but never occupy the window."
+      },
+      "correct_answers": ["A", "C"],
+      "explanation": "Performance degrades as the context window fills, so curation matters more than headroom (A). Tool definitions and results occupy the context window alongside the system prompt (C). Cached tokens still occupy the window (B is wrong), and thinking tokens do occupy the window (D is wrong)."
+    },
+    {
+      "number": 21,
+      "question": "A claims-triage assistant runs with thinking enabled. Its prompt dictates a twelve-step numbered procedure specifying exactly how Claude must reason through every claim, yet eval scores on complex cases remain poor. Which revision is recommended?",
+      "type": "single_select",
+      "options": {
+        "A": "Replace the prescriptive steps with a general instruction to reason thoroughly and let Claude structure its own thinking.",
+        "B": "Move the twelve-step procedure out of the system prompt and into each user message so it sits closer to the claim text.",
+        "C": "Expand the procedure into even more granular sub-steps so that no reasoning decision at all is left to the model's discretion.",
+        "D": "Lower the temperature to zero so that the model follows the twelve prescribed steps more consistently on every single claim."
+      },
+      "correct_answer": "A",
+      "explanation": "Overly prescriptive reasoning steps constrain Claude's thinking and can degrade performance on complex cases. Letting Claude structure its own reasoning with general guidance produces better results when thinking is enabled."
+    },
+    {
+      "number": 22,
+      "question": "A streaming integration on Claude Opus 5 loses its connection midway through a long text response, after several thousand tokens have already arrived. The team wants to recover the rest without regenerating from scratch. Which approach works?",
+      "type": "single_select",
+      "options": {
+        "A": "Resubmit the same request through the Message Batches API so the full response is generated asynchronously and can be retrieved once the batch completes.",
+        "B": "Save the text received so far and send a new request whose final user message includes that partial text with an instruction to continue from it.",
+        "C": "Resend the original request unchanged and rely on the SDK's automatic retry behavior to deliver the tokens that were cut off when the connection dropped.",
+        "D": "Save the text received so far and append it as a trailing assistant message so the model resumes generating exactly at the point where that message ends."
+      },
+      "correct_answer": "D",
+      "explanation": "Appending the partial response as a trailing assistant message lets the model resume generation from exactly where it left off, without regenerating the already-received content."
+    },
+    {
+      "number": 23,
+      "question": "A production report-generation service lists a custom Skill in container.skills with version set to \"latest\". A colleague in the same workspace uploads a new version of that Skill, and production output changes the same day with no deployment. Which configuration change prevents this class of incident?",
+      "type": "single_select",
+      "options": {
+        "A": "Set the Skill entry's version field to the specific version ID from the create-version response.",
+        "B": "Remove the version field from the Skill entry so requests keep using the version that was first deployed.",
+        "C": "Restrict Skill uploads to a single administrator account so no one else can publish a new version.",
+        "D": "Copy the Skill under a new skill_id reserved for production and reference that copy with version latest."
+      },
+      "correct_answer": "A",
+      "explanation": "Pinning to a specific version ID ensures the production service uses a known, validated version. New uploads don't affect production until the team deliberately updates the version reference."
+    },
+    {
+      "number": 24,
+      "question": "An application sends thinking-enabled requests to Claude Haiku 4.5, Claude Sonnet 4.6, and Claude Opus 4.7 from shared code. Which TWO configuration rules must it follow?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Keep budget_tokens off requests sent to Claude Opus 4.7, since it rejects extended thinking with a 400 error and uses effort instead.",
+        "B": "Send thinking type adaptive only to Claude Sonnet 4.6 and Claude Opus 4.7, since Claude Haiku 4.5 rejects that mode with a 400 error.",
+        "C": "Omit the thinking parameter entirely on Claude Opus 4.7, since thinking is on by default there and needs no explicit configuration.",
+        "D": "Strip budget_tokens from requests sent to Claude Sonnet 4.6, since it rejects extended thinking with a 400 error just like Claude Opus 4.7."
+      },
+      "correct_answers": ["A", "B"],
+      "explanation": "Claude Opus 4.7 uses effort instead of budget_tokens for thinking configuration (A). Adaptive thinking mode is only available on Claude Sonnet 4.6 and Claude Opus 4.7, not Claude Haiku 4.5 (B)."
+    },
+    {
+      "number": 25,
+      "question": "A recruiting assistant uses the MCP connector to reach an applicant-tracking MCP server that exposes delete_candidate and merge_profiles alongside read-only tools. The assistant must never modify data, yet a review found one delete_candidate call despite a system prompt forbidding it. What enforces the restriction?",
+      "type": "single_select",
+      "options": {
+        "A": "Rewrite the system prompt with emphatic, repeated instructions never to invoke delete_candidate or merge_profiles.",
+        "B": "Set defer_loading to true on delete_candidate and merge_profiles so Claude only sees them after a tool search.",
+        "C": "Set tool_choice to {\"type\": \"none\"} on requests where the user's message appears likely to trigger a write.",
+        "D": "Disable delete_candidate and merge_profiles in the server's mcp_toolset configs so they are never offered to Claude."
+      },
+      "correct_answer": "D",
+      "explanation": "Disabling the tools in the mcp_toolset configuration structurally prevents Claude from ever calling them. System prompt instructions are not guarantees, deferred loading still makes them available, and conditional tool_choice is unreliable."
+    },
+    {
+      "number": 26,
+      "question": "A developer implements the client-side handler for Claude's memory tool, mapping the /memories prefix onto a per-user directory on the application's server. Which safeguard must the handler apply to the path in every command Claude sends?",
+      "type": "single_select",
+      "options": {
+        "A": "Canonicalize every requested path and reject any that resolves outside the /memories directory.",
+        "B": "Add a system prompt instruction telling Claude to use only /memories paths and trust the paths it requests.",
+        "C": "Reject any path containing the literal string ../ and accept everything else without further checks.",
+        "D": "Skip validation on view commands, since only create and str_replace can modify files on disk."
+      },
+      "correct_answer": "A",
+      "explanation": "Path traversal attacks can use various encodings beyond literal '../'. Canonicalizing the path and checking it resolves within the allowed directory is the proper safeguard. System prompt instructions and simple string checks are insufficient."
+    },
+    {
+      "number": 27,
+      "question": "A deployment tool lets operators select any available Claude model at configuration time and must check that each request's prompt size plus max_tokens fits within that model's context window before sending it. Which approach provides that check?",
+      "type": "single_select",
+      "options": {
+        "A": "Send a probe request with an oversized max_tokens value and derive the limit from the text of the returned error message.",
+        "B": "Read the model's context window size from the usage object returned by its first successful Messages API response.",
+        "C": "Call the token counting endpoint with an empty message and read the model's context limits from the response body.",
+        "D": "Count the request's input with the token counting endpoint and check it plus max_tokens against the documented context window."
+      },
+      "correct_answer": "D",
+      "explanation": "The token counting endpoint provides exact input token counts, and the documented context window size for each model is known. Checking input_tokens + max_tokens <= context_window ensures the request fits."
+    },
+    {
+      "number": 28,
+      "question": "A team wants a PreToolUse hook that blocks force-pushes and recursive deletes to apply to every engineer who clones a repository, without each person configuring anything. Where should the hook be defined?",
+      "type": "single_select",
+      "options": {
+        "A": "Define the hook in each engineer's ~/.claude/settings.json, since user settings cover every project.",
+        "B": "Define the hook in the repository's .claude/settings.json and commit it to version control.",
+        "C": "Define the rule in the repository's CLAUDE.md, instructing Claude never to run those commands.",
+        "D": "Define the hook in the repository's .claude/settings.local.json alongside the project's other settings."
+      },
+      "correct_answer": "B",
+      "explanation": "The repository's .claude/settings.json is committed to version control and automatically applies to every engineer who clones the repository. User settings require individual setup, CLAUDE.md instructions aren't hooks, and settings.local.json isn't committed."
+    },
+    {
+      "number": 29,
+      "question": "A service asks Claude for a JSON array of rubric scores and passes the reply text to a parser. Roughly 2% of replies fail to parse; each failing reply is a truncated JSON prefix that cuts off abruptly partway through the final elements. Which change most reliably addresses these failures?",
+      "type": "single_select",
+      "options": {
+        "A": "Check the response's stop_reason and, when it is max_tokens, raise the limit or request a continuation before parsing.",
+        "B": "Move the requests to the Message Batches API so each response is given more time to finish generating.",
+        "C": "Add a repair step that appends the missing closing quotes and brackets so the truncated partial JSON can still be loaded.",
+        "D": "Add a system prompt instruction telling the model to always emit complete, valid JSON before it stops generating."
+      },
+      "correct_answer": "A",
+      "explanation": "Truncated JSON that cuts off abruptly is the hallmark of a max_tokens truncation. Checking stop_reason and raising the limit or requesting a continuation addresses the root cause."
+    },
+    {
+      "number": 30,
+      "question": "A developer wants to auto-approve a handful of project-specific shell commands, such as the repository's custom test runner, without committing those permission rules or affecting other projects on their machine. Where should the allow rules go?",
+      "type": "single_select",
+      "options": {
+        "A": "Add the rules to ~/.claude/settings.json so they apply in every project the developer opens.",
+        "B": "Add the rules to .claude/settings.json in the project so they ship with every checkout of the repository.",
+        "C": "List the commands in CLAUDE.local.md so Claude knows it may run them without asking each time.",
+        "D": "Add the rules to .claude/settings.local.json in the project, which is meant to stay out of version control."
+      },
+      "correct_answer": "D",
+      "explanation": ".claude/settings.local.json is project-scoped but not committed to version control, making it ideal for personal permission rules that shouldn't affect teammates or other projects."
+    },
+    {
+      "number": 31,
+      "question": "A research assistant loads a 60,000-token reference corpus into every request with a cache breakpoint on it. Analysts usually send their next follow-up question 15 to 40 minutes after the previous one, and cache_read_input_tokens is almost always zero. Which change most directly restores cache hits?",
+      "type": "single_select",
+      "options": {
+        "A": "Add additional cache_control breakpoints throughout the corpus so at least one segment survives until the next question.",
+        "B": "Lower max_tokens on each request so response generation consumes less of the cache entry's remaining lifetime.",
+        "C": "Set ttl to 1h on the cache_control block, paying the higher write rate so follow-ups within the hour still hit the cache.",
+        "D": "Route the follow-up questions through the Message Batches API so the discounted rate offsets the repeated cache writes."
+      },
+      "correct_answer": "C",
+      "explanation": "The default cache TTL is 5 minutes, far shorter than the 15-40 minute gap between requests. Setting ttl to 1 hour ensures the cache entry survives between requests, trading a higher write cost for cache hits."
+    },
+    {
+      "number": 32,
+      "question": "A developer finds that an Anthropic API key was hardcoded in a Python script and pushed to a shared Git repository three weeks ago. The key has since been deleted from the current version of the file. What should the team do next?",
+      "type": "single_select",
+      "options": {
+        "A": "Move the key into a .env file committed alongside the script so it no longer appears inline in the source code.",
+        "B": "Rewrite the repository's Git history to purge the key from every past commit and continue using the same key.",
+        "C": "Revoke the key in the Console, issue a replacement, and supply it through an environment variable or secrets store.",
+        "D": "Add the script to .gitignore so that future edits to the file are never pushed to the shared repository again."
+      },
+      "correct_answer": "C",
+      "explanation": "A key that was ever in a shared repository must be treated as compromised. Revoke it immediately, issue a replacement, and store it properly (environment variable or secrets manager). Git history still contains the old key."
+    },
+    {
+      "number": 33,
+      "question": "A developer is building an interactive terminal assistant on the Python Agent SDK. Users hold a multi-exchange conversation in one shared context and must be able to interrupt a long-running task mid-execution and redirect it. Which SDK interface fits this requirement?",
+      "type": "single_select",
+      "options": {
+        "A": "Call the top-level query() function once per user message and resend the entire prior transcript inside each new prompt to preserve context.",
+        "B": "Open a ClaudeSDKClient session, send follow-ups through that client's query() method, and call interrupt() when the user redirects.",
+        "C": "Run claude -p as a subprocess for each message and send SIGTERM to the process whenever the user needs to interrupt.",
+        "D": "Call the top-level query() function once per user message with continue_conversation=True, and cancel the async iterator to interrupt."
+      },
+      "correct_answer": "B",
+      "explanation": "ClaudeSDKClient maintains a session across multiple exchanges and supports interruption via interrupt(). The query() function is for single-shot interactions without session persistence."
+    },
+    {
+      "number": 34,
+      "question": "A team's backend service is written in Go. They want that service to drive the same agent loop and built-in tools that power Claude Code, without reimplementing the tool loop themselves. What is the appropriate integration approach?",
+      "type": "single_select",
+      "options": {
+        "A": "Import the Go package of the Claude Agent SDK and call query() with the same options that the TypeScript SDK exposes.",
+        "B": "Wrap the Go service as an MCP server and register it so Claude Code calls into the service for each tool.",
+        "C": "Run the Claude Code CLI as a subprocess with the -p flag and --output-format json, and parse the structured result in Go.",
+        "D": "Call the Messages API through the Go client SDK and write the tool dispatch and iteration logic in the Go service."
+      },
+      "correct_answer": "C",
+      "explanation": "Claude Code CLI with -p and --output-format json can be run as a subprocess from any language, providing the full agent loop and built-in tools without reimplementation. The Agent SDK isn't available in Go."
+    },
+    {
+      "number": 35,
+      "question": "A team defines a custom Claude Code subagent that reviews pull request diffs and reports findings. The subagent must be unable to modify files, even if a delegated task asks it to. Which configuration enforces this?",
+      "type": "single_select",
+      "options": {
+        "A": "Restrict the tools frontmatter field to read-oriented tools such as Read, Grep, and Glob.",
+        "B": "Enable memory with scope project so the subagent remembers it is a read-only reviewer.",
+        "C": "Set permissionMode to bypassPermissions so the subagent runs without approval prompts.",
+        "D": "State in the subagent's system prompt that it must never edit, write, or delete files."
+      },
+      "correct_answer": "A",
+      "explanation": "Restricting the tools frontmatter to read-only tools (Read, Grep, Glob) provides structural enforcement — the subagent literally cannot modify files because it has no write tools. System prompt instructions are not guarantees."
+    },
+    {
+      "number": 36,
+      "question": "A developer commits their own permission allow rules and preferred model for one repository to that repository's .claude/settings.json. After pulling, teammates find these choices applied to their sessions. Where should the developer keep such project-specific personal settings?",
+      "type": "single_select",
+      "options": {
+        "A": "Move them into .claude/settings.local.json, the local scope intended to stay untracked by git.",
+        "B": "Move them into the repository's CLAUDE.md so they load as instructions at the start of each session.",
+        "C": "Move them into ~/.claude/settings.json so they take effect across every project on the machine.",
+        "D": "Add .claude/settings.json to the repository's .gitignore so the file is never pushed to teammates."
+      },
+      "correct_answer": "A",
+      "explanation": ".claude/settings.local.json is specifically designed for personal project-specific settings that should not be committed to version control and should not affect teammates."
+    },
+    {
+      "number": 37,
+      "question": "A team is deciding what to commit to a repository's project-level CLAUDE.md. Which TWO actions are appropriate for that file?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Add the tool deny rules that must be technically enforced regardless of how Claude is prompted.",
+        "B": "Record the personal editor preferences and individual workflow habits of one developer.",
+        "C": "Document the code style guidelines and architectural conventions the whole team follows.",
+        "D": "Commit the build, test, and lint commands everyone working in the repository relies on."
+      },
+      "correct_answers": ["C", "D"],
+      "explanation": "CLAUDE.md should contain shared team conventions: code style guidelines and architectural conventions (C), and build/test/lint commands (D). Tool deny rules belong in settings.json (A), and personal preferences belong in settings.local.json or user-level settings (B)."
+    },
+    {
+      "number": 38,
+      "question": "When defining tools for a Claude agent, which TWO practices improve how reliably Claude selects the right tool and supplies correct inputs?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Keep each description to a single sentence and rely on descriptive tool names to convey the tool's behavior.",
+        "B": "Set tool_choice to any on every request so Claude is always forced to call one of the defined tools.",
+        "C": "Write multi-sentence descriptions covering what each tool does, when to use it, and what each parameter means.",
+        "D": "Consolidate related operations into a single tool with an action parameter instead of one tool per action."
+      },
+      "correct_answers": ["C", "D"],
+      "explanation": "Multi-sentence descriptions provide enough context for accurate tool selection (C), and consolidating related operations reduces the number of tools and groups them logically (D). Single-sentence descriptions are too brief, and forcing tool_choice doesn't improve selection accuracy."
+    },
+    {
+      "number": 39,
+      "question": "A team ships three Claude-backed products from a single Console organization and wants each product's credentials to have bounded access and separately controlled spend. Which TWO practices achieve this?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Share one organization-wide key across all products and tag each request with a product identifier for reporting.",
+        "B": "Set spend limits and review usage per workspace instead of relying only on the organization total.",
+        "C": "Create a separate workspace per product and issue each product's API key scoped to that workspace.",
+        "D": "Rotate a single shared key on a fixed weekly schedule so any product-level exposure is short-lived."
+      },
+      "correct_answers": ["B", "C"],
+      "explanation": "Separate workspaces provide bounded access and spend isolation (C), and per-workspace spend limits enable separate spend control (B). Shared keys and rotation don't provide access isolation or separate spend controls."
+    },
+    {
+      "number": 40,
+      "question": "A developer is adding one capability to a single Claude application: computing a quote from the application's own pricing rules and a private database that is reachable only inside the application's process. Nothing else will consume this capability. Which approach fits best?",
+      "type": "single_select",
+      "options": {
+        "A": "Define a custom client tool with an input schema and run the quote calculation in the application's own code when Claude calls it.",
+        "B": "Deploy a separate MCP server that exposes the quote operation and connect the application to it as an MCP client over a transport.",
+        "C": "Package the pricing rules and database queries as a Skill so Claude executes them inside the code execution container on demand.",
+        "D": "Add the code_execution server tool and instruct Claude to write code that queries the private database directly from the sandbox."
+      },
+      "correct_answer": "A",
+      "explanation": "For a single capability consumed by a single application using a private database reachable only in-process, a custom client tool is the simplest approach. An MCP server adds unnecessary complexity, and the code execution container can't reach the private database."
+    },
+    {
+      "number": 41,
+      "question": "A long-running Claude API agent built on a tool-use loop regularly approaches the context window limit before its task is finished. Which TWO mechanisms address this directly?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Enable prompt caching on the stable prefix so cached tokens no longer count toward the window.",
+        "B": "Enable server-side compaction so earlier turns are summarized and the conversation can continue.",
+        "C": "Use context editing to clear older tool results from the conversation as the agent works.",
+        "D": "Raise max_tokens on each request so the model has more room before the context window fills."
+      },
+      "correct_answers": ["B", "C"],
+      "explanation": "Server-side compaction summarizes earlier turns to free up context space (B), and context editing clears older tool results (C). Prompt caching reduces cost but cached tokens still occupy the window (A is wrong), and max_tokens controls output length, not context window usage (D is wrong)."
+    },
+    {
+      "number": 42,
+      "question": "A team maintains detailed conventions for writing test files that apply to *.test.ts files scattered across the repository. The conventions must be shared through version control but should enter context only when Claude is working with a matching file. How should this be configured?",
+      "type": "single_select",
+      "options": {
+        "A": "Add a markdown file under .claude/rules/ with a paths frontmatter glob matching the test files.",
+        "B": "List the test-file glob under claudeMdExcludes in .claude/settings.json so the conventions load only for those paths.",
+        "C": "Create a CLAUDE.local.md holding the conventions so they stay out of the always-loaded project instructions.",
+        "D": "Append the conventions as a dedicated section in the root CLAUDE.md with a heading that names the test-file pattern."
+      },
+      "correct_answer": "A",
+      "explanation": "Files under .claude/rules/ with paths frontmatter globs load into context only when Claude is working with matching files. This is the designed mechanism for path-scoped instructions that should be version-controlled."
+    },
+    {
+      "number": 43,
+      "question": "A multi-tenant document Q&A application uploads each customer's PDFs through the Files API. Its frontend passes the file_id to query in every request, so a customer can supply another customer's file_id. Which change correctly addresses this?",
+      "type": "single_select",
+      "options": {
+        "A": "Treat file IDs as server-side references, map each user to their files in the application, and isolate tenants with separate workspaces.",
+        "B": "Instruct Claude in the system prompt to verify that the referenced file belongs to the requesting customer before it answers any question.",
+        "C": "Issue a distinct API key to each customer inside the shared Default Workspace so every key can only read the files it uploaded itself.",
+        "D": "Set a short expires_in_seconds value on every upload so that a leaked file_id stops resolving shortly after the original request completes."
+      },
+      "correct_answer": "A",
+      "explanation": "Server-side file-to-user mapping with separate workspaces provides hard tenant isolation. Files are workspace-wide, so keys within the same workspace share access. System prompt instructions and expiration are not security controls."
+    },
+    {
+      "number": 44,
+      "question": "A team scripts claude -p in CI to review pull requests from external contributors. A contributor's branch adds hooks to the repository's .claude/settings.json. What should the team do so that this untrusted configuration does not execute during the automated run?",
+      "type": "single_select",
+      "options": {
+        "A": "Add a line to the job's --append-system-prompt text instructing Claude to ignore any hooks defined by the repository under review.",
+        "B": "Start the job with --bare or pass a --settings override setting disableAllHooks to true, after reviewing the repository's .claude directory.",
+        "C": "Rely on the workspace trust dialog, which blocks the repository's hooks in a -p session until a maintainer explicitly approves the folder as trusted.",
+        "D": "Run the job in bypassPermissions mode so that permission prompts triggered by repository hooks cannot interrupt the automated review."
+      },
+      "correct_answer": "B",
+      "explanation": "--bare skips loading repository settings (including hooks), and disableAllHooks: true explicitly prevents hook execution. These are structural controls for untrusted repositories in automated runs."
+    },
+    {
+      "number": 45,
+      "question": "An application calls the Messages API directly and needs the tools of a vendor's MCP server that is hosted remotely and reachable over HTTPS. The team needs only tool calling, not MCP prompts or resources, and does not want to run an MCP client. Which approach fits?",
+      "type": "single_select",
+      "options": {
+        "A": "Reference the server in the request's mcp_servers parameter and govern its tools with an mcp_toolset entry.",
+        "B": "Package the server's operations as a Skill so Claude loads the calling instructions only when the task needs them.",
+        "C": "Read the server's tool list once and re-declare each tool as a custom client tool that proxies calls to the server.",
+        "D": "Install the MCP SDK, open a client connection from the application, and pass tools through the SDK conversion helpers."
+      },
+      "correct_answer": "A",
+      "explanation": "The mcp_servers parameter lets the Messages API connect to remote MCP servers directly, with mcp_toolset controlling which tools are available. This requires no client-side MCP implementation."
+    },
+    {
+      "number": 46,
+      "question": "A service wraps every Messages API call in a retry loop that retries any non-2xx response with exponential backoff. Logs show a request with a misspelled top-level field being retried five times, receiving HTTP 400 invalid_request_error each time. What should the client do differently?",
+      "type": "single_select",
+      "options": {
+        "A": "Stop retrying this 400, log the returned error body, and fix the request construction that produced it.",
+        "B": "Raise the maximum retry count and lengthen the backoff so the 400 has more time to clear on its own.",
+        "C": "Route the failing request through the Message Batches API so it is queued rather than rejected outright.",
+        "D": "Add random jitter to the backoff schedule so the repeated 400 attempts are not sent in lockstep."
+      },
+      "correct_answer": "A",
+      "explanation": "HTTP 400 errors are client-side validation failures that won't resolve with retries. The client should stop retrying, log the error, and fix the malformed request."
+    },
+    {
+      "number": 47,
+      "question": "A contract-summarization service occasionally returns summaries that stop mid-sentence. The API returns HTTP 200 with no error, and the text before the cut-off is coherent and on topic. What should the developer do?",
+      "type": "single_select",
+      "options": {
+        "A": "Retry the request with exponential backoff, treating the cut-off as a transient error.",
+        "B": "Enable streaming so the remaining text is delivered after the initial chunk.",
+        "C": "Add a system prompt instruction telling Claude to always finish its sentences.",
+        "D": "Inspect stop_reason and raise max_tokens when it reports max_tokens."
+      },
+      "correct_answer": "D",
+      "explanation": "A coherent response that stops mid-sentence with HTTP 200 is a max_tokens truncation. Inspecting stop_reason confirms this, and raising max_tokens gives the model room to finish."
+    },
+    {
+      "number": 48,
+      "question": "An async service exposes a chat endpoint and a health-check endpoint. Chat handlers call the Messages API through the SDK's synchronous client. Under load, health checks stall whenever a chat call is in flight, although the API itself responds promptly. What is the correct fix?",
+      "type": "single_select",
+      "options": {
+        "A": "Route the chat handlers' requests through the Message Batches API so the service never blocks waiting on a call.",
+        "B": "Replace the synchronous client with the SDK's asynchronous client and await each Messages call inside the handler.",
+        "C": "Enable streaming on the existing synchronous call so the handler starts yielding tokens while the response arrives.",
+        "D": "Wrap each synchronous call in exponential backoff with jitter so transient errors no longer hold up the handler."
+      },
+      "correct_answer": "B",
+      "explanation": "Synchronous API calls block the event loop, preventing health checks from responding. Using the SDK's asynchronous client and awaiting calls allows the event loop to handle other requests concurrently."
+    },
+    {
+      "number": 49,
+      "question": "Which TWO changes between consecutive Messages API requests cause a previously cached prompt prefix to be invalidated, forcing a new cache write?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Provide only tool_result blocks as the next user turn.",
+        "B": "Change the tool_choice value between the two requests.",
+        "C": "Add an image content block to a prompt that previously had none.",
+        "D": "Append a new user turn after the last cache breakpoint in the request."
+      },
+      "correct_answers": ["B", "C"],
+      "explanation": "Changing tool_choice (B) and adding/changing content blocks before the cache breakpoint (C) invalidate the cached prefix. Tool_result blocks in new turns after the breakpoint (A) and appending turns after the breakpoint (D) don't invalidate the prefix."
+    },
+    {
+      "number": 50,
+      "question": "A coding agent built on the Agent SDK delegates nearly every step to subagents, including single-file lookups that a direct search would answer faster. Latency and cost have climbed with no quality gain. Which change best restores an appropriate balance?",
+      "type": "single_select",
+      "options": {
+        "A": "Add a permission deny rule for the subagent-delegation tool so the agent can never spawn subagents and must finish every task within its own context window.",
+        "B": "Raise max_turns in the agent options so the agent has enough turns to finish despite the extra round trips that delegation adds.",
+        "C": "Add system prompt guidance that reserves delegation for parallel, isolated, or independent work and has the agent act directly otherwise.",
+        "D": "Configure every subagent definition to run on Haiku so each delegation costs less regardless of whether it was actually warranted."
+      },
+      "correct_answer": "C",
+      "explanation": "System prompt guidance that reserves delegation for appropriate cases (parallel, isolated, or independent work) while having the agent act directly for simple tasks restores the right balance without completely disabling delegation."
+    },
+    {
+      "number": 51,
+      "question": "A developer builds a direct streaming integration against the Messages API without a client SDK. When Claude calls a client tool, the code attempts to parse the JSON in each content_block_delta event as it arrives and fails with parse errors. What should the code do instead?",
+      "type": "single_select",
+      "options": {
+        "A": "Read the tool input from the message_delta event, which carries the complete input object once the block has finished.",
+        "B": "Disable streaming on any request that includes tool definitions, because tool input is only available in non-streaming responses.",
+        "C": "Concatenate the partial_json fragments for that content block and parse them after the content_block_stop event arrives.",
+        "D": "Set tool_choice to any so that Claude emits the full tool input inside a single content_block_start event."
+      },
+      "correct_answer": "C",
+      "explanation": "In streaming mode, tool inputs arrive as partial_json fragments across multiple content_block_delta events. The code should concatenate all fragments and parse the complete JSON only after the content_block_stop event."
+    },
+    {
+      "number": 52,
+      "question": "A custom order-status tool throws an exception when its backing service times out. The developer wants Claude to treat the outcome as a failed call it can reason about, not as valid order data. How should the application report the failure back to Claude?",
+      "type": "single_select",
+      "options": {
+        "A": "Skip the tool_result and add a new user message that pastes the raw exception text for Claude to read.",
+        "B": "Send a tool_result containing the last successful response so the conversation continues without interruption.",
+        "C": "Send a tool_result whose content is an empty string so Claude understands the call produced nothing.",
+        "D": "Send a tool_result for that tool_use_id with is_error set to true and content describing the timeout."
+      },
+      "correct_answer": "D",
+      "explanation": "Returning a tool_result with is_error: true and a descriptive error message lets Claude understand the failure and decide how to proceed — retry, use an alternative approach, or inform the user."
+    },
+    {
+      "number": 53,
+      "question": "A latency-sensitive chat service moves from Claude Sonnet 4.6 to Claude Sonnet 5 without changing its requests, which have never included a thinking parameter. Output token counts and response times rise sharply. Which change addresses the cause?",
+      "type": "single_select",
+      "options": {
+        "A": "Wait for prompt caching support on Claude Sonnet 5 before migrating, since each request currently reprocesses the entire prompt uncached.",
+        "B": "Opt into fast mode by setting speed to fast, since Claude Sonnet 5 generates output tokens more slowly at standard speed.",
+        "C": "Set the thinking configuration and effort level explicitly, because omitting the thinking parameter enables thinking on Claude Sonnet 5.",
+        "D": "Raise max_tokens on every request, since Claude Sonnet 5 needs a larger output budget to finish the same answers it produced on Claude Sonnet 4.6."
+      },
+      "correct_answer": "C",
+      "explanation": "On Claude Sonnet 5, thinking is enabled by default when the thinking parameter is omitted. This causes higher output token counts (thinking tokens are billed as output) and increased latency. Setting thinking configuration explicitly controls this behavior."
+    }
+  ]
+}

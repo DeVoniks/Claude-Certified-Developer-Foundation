@@ -1,0 +1,695 @@
+{
+  "exam_title": "CCDV-F Full Practice Exam 2",
+  "total_questions": 53,
+  "questions": [
+    {
+      "number": 1,
+      "question": "A team is migrating a production application from Claude Sonnet 4.5 to Claude Opus 5. Its current requests include an assistant response prefill and non-default temperature and top_p values. Which TWO payload changes must they make so requests are not rejected?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Update the anthropic-version header to a newer value, since the previous value fails on the new model.",
+        "B": "Remove assistant response prefill from the messages list and shape output with structured outputs or prompting.",
+        "C": "Omit non-default temperature, top_p, and top_k values, which the target model rejects with a 400 error.",
+        "D": "Strip all cache_control markers from requests, since prompt caching is unavailable on the newest model releases."
+      },
+      "correct_answers": ["B", "C"],
+      "explanation": "Claude Opus 5 does not support assistant response prefill and rejects non-default sampling parameters (temperature, top_p, top_k) with a 400 error. The anthropic-version header and cache_control markers remain compatible."
+    },
+    {
+      "number": 2,
+      "question": "A developer in a monorepo launches Claude Code from packages/api/. The team wants repository-wide conventions plus API-team guidance in every session. Which TWO placement decisions achieve this?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Place the repository-wide conventions in a CLAUDE.md at the repo root, since files in ancestor directories load automatically.",
+        "B": "Duplicate the root conventions inside packages/api/CLAUDE.md, because the file nearest the working directory overrides files above it.",
+        "C": "Spread the guidance across CLAUDE.md files in subdirectories below packages/api/, since they all load into context at session launch.",
+        "D": "Add the API-team guidance to packages/api/CLAUDE.md, expecting it to be concatenated with the root file's content."
+      },
+      "correct_answers": ["A", "D"],
+      "explanation": "CLAUDE.md files in ancestor directories load automatically and are concatenated. The repo root file provides conventions for all teams, and the package-level file adds team-specific guidance. Subdirectory files below the working directory do not auto-load at launch."
+    },
+    {
+      "number": 3,
+      "question": "A developer is provisioning a static Claude API key for a new server-side service. Which TWO practices follow documented credential-management guidance?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Commit the key to the service's private repository, relying on repository access controls for protection.",
+        "B": "Load the key from a secrets manager or environment variable at runtime.",
+        "C": "Set an expiration for the key when creating it in the Console.",
+        "D": "Include the key in the system prompt so Claude can pass it to tools that need authentication."
+      },
+      "correct_answers": ["B", "C"],
+      "explanation": "Best practices for API key management include loading keys from a secrets manager or environment variable (never hardcoding or committing them) and setting key expiration. Keys should never be placed in system prompts or committed to repositories."
+    },
+    {
+      "number": 4,
+      "question": "A team runs a multi-turn assistant with prompt caching on a stable conversation prefix. To save tokens, the application changes the output_config.effort value on each request based on query difficulty. Usage now shows cache writes on every turn and no cache reads. What should the team change?",
+      "type": "single_select",
+      "options": {
+        "A": "Add a separate cache breakpoint for each effort level so requests at each level read from their own cached entry.",
+        "B": "Extend the cache entries to the one-hour TTL so they remain valid while the effort value changes between requests.",
+        "C": "Switch from explicit breakpoints to automatic caching so the breakpoint repositions itself and survives the effort changes.",
+        "D": "Hold a single effort level across the conversation and steer per-turn reasoning depth with guidance appended to user messages."
+      },
+      "correct_answer": "D",
+      "explanation": "Changing the effort value between requests invalidates the cached prefix because the cache key includes request parameters. Holding a single effort level preserves the cache, while per-turn depth can be steered through user message content which comes after the cached prefix."
+    },
+    {
+      "number": 5,
+      "question": "A developer wants Claude Code to follow personal instructions specific to one project, such as their own debugging workflow, without committing those instructions to the shared repository or affecting sessions in other projects. Where should the instructions go?",
+      "type": "single_select",
+      "options": {
+        "A": "In ~/.claude/CLAUDE.md, so the instructions load automatically in every session.",
+        "B": "As keys in the project's .claude/settings.local.json configuration file.",
+        "C": "In the project's committed CLAUDE.md, marked with a note that the section is personal.",
+        "D": "In a CLAUDE.local.md at the project root, with the file added to .gitignore."
+      },
+      "correct_answer": "D",
+      "explanation": "CLAUDE.local.md at the project root is designed for personal, project-specific instructions that are not committed to version control. Adding it to .gitignore keeps it local. ~/.claude/CLAUDE.md would apply to all projects, not just one."
+    },
+    {
+      "number": 6,
+      "question": "A developer defines several custom subagents for a coding assistant. When a new request arrives, what does Claude primarily do to decide which subagent, if any, should handle the task?",
+      "type": "single_select",
+      "options": {
+        "A": "Match the incoming task against each subagent's description.",
+        "B": "Compare each subagent's tools list and delegate to whichever tool set best covers the request.",
+        "C": "Read each subagent's full system prompt and evaluate it before choosing where to delegate.",
+        "D": "Prioritize subagents by registration order, giving earlier definitions precedence for delegation."
+      },
+      "correct_answer": "A",
+      "explanation": "Claude uses each subagent's description to determine which one should handle a given task. The description is the primary mechanism for routing — it should clearly state what tasks the subagent handles and when it should be used."
+    },
+    {
+      "number": 7,
+      "question": "A team deploys a change to the code that builds its Claude API requests. Every call now fails with HTTP 400 and error type invalid_request_error, and retries return the identical error. How should the team respond?",
+      "type": "single_select",
+      "options": {
+        "A": "Inspect the request payload for malformed or invalid parameters and fix the request construction code.",
+        "B": "Wait for the service disruption to clear, monitoring the Anthropic status page before resending.",
+        "C": "Raise the SDK's max_retries setting so the built-in retry logic resends the requests more times.",
+        "D": "Add exponential backoff and retry the requests, since the error indicates transient server overload."
+      },
+      "correct_answer": "A",
+      "explanation": "HTTP 400 invalid_request_error is a client error indicating the request payload is malformed or contains invalid parameters. It is not transient and retrying won't help. The team should inspect and fix the request construction code."
+    },
+    {
+      "number": 8,
+      "question": "A developer builds a Claude agent with a custom tool that queries an internal database. To handle authentication, the developer places the database password in the system prompt so Claude can supply it as a tool argument. What change does a security review require?",
+      "type": "single_select",
+      "options": {
+        "A": "Store the credential in the server-side tool implementation so it never enters the model's context.",
+        "B": "Base64-encode the password within the system prompt so it is not recognizable as a credential.",
+        "C": "Add a system-prompt instruction telling Claude to never repeat the password in any of its responses.",
+        "D": "Keep the design unchanged, since system prompts are never exposed to end users of an application."
+      },
+      "correct_answer": "A",
+      "explanation": "Credentials should never be placed in the model's context (system prompt or messages). They should be stored server-side in the tool implementation. System prompts can potentially be extracted through prompt injection, and base64 encoding provides no real security."
+    },
+    {
+      "number": 9,
+      "question": "A planning session for a Claude-powered contract review tool at a law firm produces the following statements. Which statement is the business requirement from which the other statements are derived?",
+      "type": "single_select",
+      "options": {
+        "A": "The service must autoscale to 200 concurrent review requests during month-end filing peaks.",
+        "B": "The tool shall flag non-standard indemnity clauses in each uploaded contract.",
+        "C": "The tool must respond within four seconds at the 95th percentile.",
+        "D": "The firm aims to cut contract review turnaround from five days to one day within the year."
+      },
+      "correct_answer": "D",
+      "explanation": "The business requirement is the high-level business goal that drives the other requirements. Cutting turnaround from five days to one day is the overarching business objective. The other statements (autoscaling, clause flagging, response time) are derived technical and functional requirements."
+    },
+    {
+      "number": 10,
+      "question": "An assistant declares several custom tools with the default tool_choice of auto. Claude often answers questions from its own knowledge without consulting the tools, but the assistant must still respond directly to purely conversational turns. What is the appropriate adjustment?",
+      "type": "single_select",
+      "options": {
+        "A": "Set tool_choice to {\"type\": \"any\"} so the API requires Claude to call one of the tools on every turn.",
+        "B": "Duplicate each tool's entry in the tools array so the definitions carry more weight in selection.",
+        "C": "Raise the temperature parameter so Claude samples tool-calling responses more often than direct answers.",
+        "D": "Add a system prompt instruction directing Claude to use the tools to investigate before responding."
+      },
+      "correct_answer": "D",
+      "explanation": "A system prompt instruction to use tools before answering guides Claude to consult tools while still allowing direct responses for conversational turns. Setting tool_choice to 'any' would force tool use on every turn, breaking conversational responses."
+    },
+    {
+      "number": 11,
+      "question": "An application executes the tool calls Claude returns through the Messages API. Occasionally a tool_use block arrives with a missing required field or a mistyped value, crashing the tool executor. Which change guarantees that tool inputs conform to the defined schema?",
+      "type": "single_select",
+      "options": {
+        "A": "Enable strict tool use by setting strict: true on each custom tool definition.",
+        "B": "Move the tool's input schema into output_config.format so the response follows it.",
+        "C": "Lower the temperature so tool inputs are generated more deterministically each turn.",
+        "D": "Add a system prompt instruction requiring Claude to match each input schema exactly."
+      },
+      "correct_answer": "A",
+      "explanation": "Setting strict: true on tool definitions enables strict tool use, which guarantees that tool inputs conform exactly to the defined JSON schema. Temperature changes and prompt instructions cannot guarantee schema conformance."
+    },
+    {
+      "number": 12,
+      "question": "A Claude-powered document-processing service has been live for a year. Which TWO of the following activities belong to the operations and maintenance phase of the systems life cycle?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Reviewing latency and error-rate alerts against agreed service levels and tuning capacity.",
+        "B": "Responding to a production incident by rolling back a faulty configuration change.",
+        "C": "Selecting the model tier and the overall processing architecture before implementation begins.",
+        "D": "Interviewing stakeholders to elicit and document what the assistant must do for its users."
+      },
+      "correct_answers": ["A", "B"],
+      "explanation": "Operations and maintenance involves monitoring live systems against SLAs (A) and responding to production incidents (B). Selecting architecture (C) belongs to the design phase, and interviewing stakeholders (D) belongs to requirements analysis."
+    },
+    {
+      "number": 13,
+      "question": "Following an approved design, a team writes the application code for a Claude-powered assistant, builds the prompts and Messages API integration, and runs unit and integration tests before the system goes live. Which systems life cycle activity does this work represent?",
+      "type": "single_select",
+      "options": {
+        "A": "Implement the approved design by constructing and testing the system.",
+        "B": "Analyze stakeholder needs and document the system requirements.",
+        "C": "Operate and maintain the live system once it is in production.",
+        "D": "Design the system architecture and technical specifications."
+      },
+      "correct_answer": "A",
+      "explanation": "Writing code, building integrations, and running tests after an approved design is the implementation phase of the systems life cycle."
+    },
+    {
+      "number": 14,
+      "question": "A team is building an assistant that diagnoses production incidents. The investigation steps differ for every incident: which logs to inspect and which commands to run depend on what each previous step reveals. Which design pattern fits this task?",
+      "type": "single_select",
+      "options": {
+        "A": "A single Messages API call with a large max_tokens value so the full diagnosis fits in one response.",
+        "B": "An agent running a tool-use loop that decides its next action based on each tool result.",
+        "C": "A fixed workflow that runs the same predetermined sequence of LLM calls for every incident.",
+        "D": "A router step that classifies each incident and dispatches it to one of several fixed pipelines."
+      },
+      "correct_answer": "B",
+      "explanation": "When investigation steps depend dynamically on previous results, an agentic tool-use loop is the right pattern. The agent decides its next action based on each tool result, allowing flexible, adaptive investigation."
+    },
+    {
+      "number": 15,
+      "question": "A developer is inspecting an MCP setup in which Claude Desktop connects to three MCP servers: a local stdio filesystem server and two remote HTTP servers. How should the developer model the roles of host, client, and server in this setup?",
+      "type": "single_select",
+      "options": {
+        "A": "Treat each server as the MCP client that initiates the connection, with Claude Desktop responding as the MCP server.",
+        "B": "Model Claude Desktop as the host that creates one MCP client per connected server, giving three dedicated connections.",
+        "C": "Model Claude Desktop as a single MCP client that multiplexes messages to all three servers over one shared connection.",
+        "D": "Treat the stdio server as code running inside the host process, so only the two remote HTTP servers need their own clients."
+      },
+      "correct_answer": "B",
+      "explanation": "In MCP architecture, the host application (Claude Desktop) creates one MCP client per connected server. Each client maintains a dedicated 1:1 connection with its server. The host manages multiple clients."
+    },
+    {
+      "number": 16,
+      "question": "A team's Claude application meets its accuracy targets, but responses are slow and per-request costs exceed budget. The team plans several rounds of prompt rewrites to address this. What does Anthropic's prompt engineering guidance recommend in this situation?",
+      "type": "single_select",
+      "options": {
+        "A": "Lower the temperature parameter so the model samples more quickly and generates each response in less time.",
+        "B": "Add more few-shot examples to the prompt so the model converges on answers with less internal deliberation per request.",
+        "C": "Continue iterating on the prompt through further rewrites, since prompt engineering is the primary lever for latency and cost as well as quality.",
+        "D": "Assess whether a faster, cheaper model still meets the quality bar, since latency and cost are often better addressed by model selection."
+      },
+      "correct_answer": "D",
+      "explanation": "Anthropic recommends that when accuracy targets are met but latency and cost are concerns, teams should assess whether a faster, cheaper model can maintain the quality bar. Model selection is often the most effective lever for latency and cost optimization."
+    },
+    {
+      "number": 17,
+      "question": "A team must classify several hundred thousand support tickets overnight. Results are not needed in real time, and minimizing per-request cost is a priority. Which Claude API capability best fits this workload?",
+      "type": "single_select",
+      "options": {
+        "A": "Upload the tickets with the Files API, which triggers server-side batch processing of the file contents.",
+        "B": "Submit the requests through the Message Batches API, which processes them asynchronously at a 50% discount.",
+        "C": "Open a persistent websocket connection to the API so requests can be pushed continuously at bulk pricing.",
+        "D": "Issue parallel synchronous Messages API calls and rely on the SDK's built-in retry logic to absorb rate limiting."
+      },
+      "correct_answer": "B",
+      "explanation": "The Message Batches API is designed for large-scale asynchronous workloads, processing requests at a 50% cost discount. It's ideal for overnight batch processing where real-time results aren't needed."
+    },
+    {
+      "number": 18,
+      "question": "Reviewers are nervous about a Claude-assisted refactor of a legacy scheduling module that has little automated test coverage. Which TWO practices best guard against regressions?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Capture the module's current observable behavior in a suite of characterization tests first.",
+        "B": "Apply the refactor in small steps, running the tests to confirm they pass after each one.",
+        "C": "Remove tests that start failing during the refactor so the pipeline stays green throughout.",
+        "D": "Deliver the entire refactor in one large commit so reviewers can assess the change atomically."
+      },
+      "correct_answers": ["A", "B"],
+      "explanation": "Characterization tests capture existing behavior before refactoring, and applying changes in small steps with test verification guards against regressions. Removing failing tests (C) defeats the purpose, and large atomic commits (D) make it harder to identify which change caused a regression."
+    },
+    {
+      "number": 19,
+      "question": "A team uses a Claude coding agent to fix bugs in a shared library. Reviewers notice the generated fixes hardcode values that match the failing test inputs, so changes pass CI but break on other valid inputs. Which practice addresses this?",
+      "type": "single_select",
+      "options": {
+        "A": "Remove the failing tests from the repository so their specific input values no longer influence the code that Claude generates.",
+        "B": "Instruct Claude to implement general logic for all valid inputs and treat tests as verification, not the definition of the solution.",
+        "C": "Increase max_tokens on each generation request so Claude has enough output room to produce a more complete implementation.",
+        "D": "Have Claude regenerate each fix several times and merge the first candidate version whose changes pass the full CI pipeline."
+      },
+      "correct_answer": "B",
+      "explanation": "Instructing Claude to implement general logic and treat tests as verification rather than the solution definition addresses the root cause of overfitting to test inputs. The agent should solve the general problem, not just make specific tests pass."
+    },
+    {
+      "number": 20,
+      "question": "An Agent SDK deployment sandboxes a data-processing agent and configures a network allowlist to stop exfiltration to unapproved hosts. A security review asks whether the allowlist alone guarantees outbound traffic reaches only approved domains. What is the accurate assessment and remediation?",
+      "type": "single_select",
+      "options": {
+        "A": "Confirm the allowlist is sufficient on its own, because the sandbox proxy validates each connection's TLS certificate against the approved domain before permitting traffic.",
+        "B": "Treat the allowlist as hostname-based filtering that does not inspect TLS traffic, and configure a TLS-terminating proxy for stronger enforcement.",
+        "C": "Add a system-prompt instruction directing the agent to contact only approved hosts, which combines with the allowlist to make bypass impossible.",
+        "D": "Enable allowUnsandboxedCommands so outbound requests route through the permissions system, where the canUseTool handler can verify every destination."
+      },
+      "correct_answer": "B",
+      "explanation": "Network allowlists perform hostname-based filtering but don't inspect TLS traffic content. For stronger enforcement against exfiltration, a TLS-terminating proxy is needed to inspect the actual traffic. System prompt instructions are not security controls."
+    },
+    {
+      "number": 21,
+      "question": "A team's custom Skill inlines full API documentation and schema references directly in SKILL.md, which now runs well over 2,000 lines. Once the Skill loads, Claude's responses degrade and token usage spikes. Which authoring change best fits the Skills architecture?",
+      "type": "single_select",
+      "options": {
+        "A": "Keep SKILL.md as a concise overview and move reference material into separate bundled files read on demand.",
+        "B": "Split the Skill into a dozen narrower Skills, one per API area, so that each individual SKILL.md file stays short.",
+        "C": "Minify the SKILL.md by removing headings, examples, and blank lines to shrink its token footprint.",
+        "D": "Enable prompt caching on the request so the large SKILL.md loads at reduced cost on every call."
+      },
+      "correct_answer": "A",
+      "explanation": "The Skills architecture supports bundled reference files that can be read on demand. SKILL.md should be a concise overview with reference material in separate files, keeping the initial context load small while making detailed information available when needed."
+    },
+    {
+      "number": 22,
+      "question": "A team runs claude -p tasks in a CI pipeline. Runs behave differently across runner machines because each host's hooks, CLAUDE.md files, and MCP server configuration load into every session. Which change gives the runs a consistent, minimal starting environment?",
+      "type": "single_select",
+      "options": {
+        "A": "Instruct Claude in an appended system prompt to ignore any hooks, memory files, or servers configured on the runner.",
+        "B": "Pass --allowedTools with an empty list so the host's configured hooks and MCP servers are never approved to run.",
+        "C": "Add the --bare flag so the session skips auto-discovery of hooks, CLAUDE.md, MCP servers, and auto memory.",
+        "D": "Set temperature to 0 in the invocation so the model produces identical behavior regardless of host configuration."
+      },
+      "correct_answer": "C",
+      "explanation": "The --bare flag provides a minimal, consistent environment by skipping auto-discovery of hooks, CLAUDE.md files, MCP servers, and auto memory. This is ideal for CI pipelines where reproducibility across different machines is important."
+    },
+    {
+      "number": 23,
+      "question": "A team wants the pre-built harness and session management of Claude Managed Agents, but a compliance policy requires that agent execution run on infrastructure the team controls. Which approach satisfies both requirements?",
+      "type": "single_select",
+      "options": {
+        "A": "Configure a self-hosted sandbox environment so sessions execute on infrastructure the team controls.",
+        "B": "Run sessions in the Anthropic-managed cloud sandbox with network access disabled, which satisfies infrastructure-control policies.",
+        "C": "Rebuild the agent as a custom loop on the Messages API, because Managed Agents sessions run only in Anthropic's cloud sandbox.",
+        "D": "Embed the Claude Agent SDK inside each Managed Agents session to redirect tool execution to the team's own servers."
+      },
+      "correct_answer": "A",
+      "explanation": "Claude Managed Agents supports self-hosted sandbox environments, allowing teams to use the pre-built harness and session management while executing on their own infrastructure for compliance requirements."
+    },
+    {
+      "number": 24,
+      "question": "A developer is building a browser-based single-page application that calls the Messages API directly from frontend JavaScript, with the API key embedded in the shipped bundle. What is the appropriate way to secure this integration?",
+      "type": "single_select",
+      "options": {
+        "A": "Load the key from a build-time environment variable so it never appears literally in the source code.",
+        "B": "Obfuscate the API key inside the minified JavaScript bundle so it cannot be read directly from source.",
+        "C": "Rotate the API key on a short schedule so any key extracted from the bundle expires quickly.",
+        "D": "Route the calls through a backend service that holds the API key, so the key never ships to the client."
+      },
+      "correct_answer": "D",
+      "explanation": "API keys must never be shipped to the client side. The correct approach is to route API calls through a backend service that holds the key server-side. Build-time variables, obfuscation, and rotation do not prevent key extraction from client-side code."
+    },
+    {
+      "number": 25,
+      "question": "A developer's application calls the Messages API and needs the tools exposed by a remote MCP server reachable over HTTPS. The developer wants to avoid implementing and operating a separate MCP client. Which approach fits?",
+      "type": "single_select",
+      "options": {
+        "A": "Reference the server by URL in the mcp_servers request parameter so the MCP connector manages the connection.",
+        "B": "Package the server's endpoint documentation as a Skill so Claude loads the tool details on demand.",
+        "C": "Recreate each of the server's tools as custom tool definitions and execute the HTTP calls inside the application.",
+        "D": "Use the SDK's client-side MCP helpers to manage the connection and convert types between the two protocols."
+      },
+      "correct_answer": "A",
+      "explanation": "The mcp_servers request parameter allows referencing remote MCP servers by URL, letting the MCP connector manage the connection without implementing a separate MCP client. This is the simplest approach for integrating remote MCP tools."
+    },
+    {
+      "number": 26,
+      "question": "An organization rolling out Claude Code to hundreds of developers must guarantee that Claude can never read .env files or push directly to protected branches, on every machine, regardless of individual developer configuration. Where should this restriction be configured?",
+      "type": "single_select",
+      "options": {
+        "A": "In permissions.deny rules within managed settings deployed to the managed policy location.",
+        "B": "In the project CLAUDE.md committed to each repository's root directory.",
+        "C": "In each developer's personal settings.local.json file with the appropriate deny rules.",
+        "D": "In a centrally deployed managed CLAUDE.md that instructs Claude never to take those actions."
+      },
+      "correct_answer": "A",
+      "explanation": "Managed settings with permissions.deny rules deployed to the managed policy location provide organization-wide, enforced restrictions that cannot be overridden by individual developer configurations. CLAUDE.md instructions are guidance, not enforcement."
+    },
+    {
+      "number": 27,
+      "question": "A team is iterating on a production prompt to improve output quality across releases. Which TWO practices reflect disciplined prompt refinement?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Score every revision against a consistent evaluation set before deciding to keep it.",
+        "B": "Bundle several prompt changes into a single revision to reach quality gains faster.",
+        "C": "Ask Claude to report which of the recent prompt changes caused the observed improvement.",
+        "D": "Modify one element of the prompt per iteration so each change's effect can be attributed."
+      },
+      "correct_answers": ["A", "D"],
+      "explanation": "Disciplined prompt refinement requires scoring revisions against a consistent evaluation set (A) and modifying one element per iteration to attribute effects (D). Bundling changes makes attribution impossible, and Claude cannot reliably identify which prompt change caused an improvement."
+    },
+    {
+      "number": 28,
+      "question": "A Python backend service calls Claude through the official Anthropic Python SDK. Failed requests must be handled differently: rate-limit failures should be re-queued for later, while malformed requests should be logged and discarded. How should the code tell these failure types apart?",
+      "type": "single_select",
+      "options": {
+        "A": "Catch the SDK's typed exception classes, which map different API error responses to distinct error types.",
+        "B": "Compare substrings in the error message text, since the SDK wraps every failure in one generic exception.",
+        "C": "Bypass the SDK and issue raw HTTP requests, since SDK exceptions hide the underlying status code.",
+        "D": "Inspect the assistant message content, since API errors are returned as text inside the model's response body."
+      },
+      "correct_answer": "A",
+      "explanation": "The Anthropic Python SDK provides typed exception classes (e.g., RateLimitError, BadRequestError) that map API error responses to distinct types, allowing differentiated error handling."
+    },
+    {
+      "number": 29,
+      "question": "A developer building a Q&A assistant has access to a model with a 1M-token context window and proposes loading the entire company knowledge base into every request, reasoning that more context can only improve answer quality. What is the accurate understanding?",
+      "type": "single_select",
+      "options": {
+        "A": "Recognize that accuracy and recall can degrade as context grows, so retrieve and include only the content relevant to each request.",
+        "B": "Include only the first half of the knowledge base, since tokens past the midpoint of the context window are ignored during generation.",
+        "C": "Send the knowledge base once at the start, since the model retains context across separate API requests after it has been processed.",
+        "D": "Fill the window completely, since the model weighs every token in context equally and answer quality scales with the amount included."
+      },
+      "correct_answer": "A",
+      "explanation": "Accuracy and recall can degrade as context length grows (the 'lost in the middle' effect). The best practice is to retrieve and include only relevant content for each request rather than loading everything. The model does not retain context across separate API requests."
+    },
+    {
+      "number": 30,
+      "question": "An application built with the Claude Agent SDK delegates a security analysis to a custom subagent, which returns a summary. Later in the same session, the analysis must be extended to a second module without redoing earlier work. What should the application do?",
+      "type": "single_select",
+      "options": {
+        "A": "Copy the parent conversation's transcript into a new subagent's prompt so it can reconstruct the earlier analysis.",
+        "B": "Spawn a fresh subagent of the same type, since subagents of one type share persistent state automatically.",
+        "C": "Resume the existing subagent, which retains the full conversation history from its earlier run.",
+        "D": "Increase the parent agent's max_tokens so results from earlier subagent runs stay available to later ones."
+      },
+      "correct_answer": "C",
+      "explanation": "Subagents in the Agent SDK retain their full conversation history from earlier runs. Resuming the existing subagent allows extending the analysis without redoing work, as it has the context from the first analysis."
+    },
+    {
+      "number": 31,
+      "question": "A team builds a direct server-sent events integration with the Messages API instead of using an SDK. The client needs a reliable signal that a streamed response finished successfully before committing the accumulated text to its database. Which stream behavior should the client rely on?",
+      "type": "single_select",
+      "options": {
+        "A": "Finalize the output when the first content_block_stop event arrives, since it closes the generated content.",
+        "B": "Finalize the output after message_stop arrives and the stop_reason in message_delta shows no truncation.",
+        "C": "Finalize the output when the connection closes, since the server only ends the stream after sending everything.",
+        "D": "Finalize the output once accumulated output tokens reach the max_tokens value set on the request."
+      },
+      "correct_answer": "B",
+      "explanation": "The message_stop event combined with checking the stop_reason in the message_delta provides a reliable signal that the stream completed successfully. Connection closure alone is unreliable, and a response may have multiple content blocks."
+    },
+    {
+      "number": 32,
+      "question": "A team building an internal analytics application finds a custom Skill published by an unknown third party that matches its needs. The application handles sensitive customer records. What should the team do before adopting the Skill?",
+      "type": "single_select",
+      "options": {
+        "A": "Audit all bundled files, including scripts, for behavior that does not match the Skill's stated purpose.",
+        "B": "Pin the Skill to its latest version so security fixes from the author are applied automatically.",
+        "C": "Rely on Skill content scanning to vet it automatically, since scanning covers Skills uploaded through the API.",
+        "D": "Use the Skill without review, since the sandboxed execution container prevents any harmful behavior."
+      },
+      "correct_answer": "A",
+      "explanation": "Before adopting a third-party Skill, especially for applications handling sensitive data, teams should audit all bundled files and scripts for unexpected or malicious behavior. Skills are not automatically scanned, and sandboxing alone does not prevent data exposure through prompt content."
+    },
+    {
+      "number": 33,
+      "question": "A developer adds print statements to a local stdio MCP server to debug a tool handler. Afterward, the connected client reports JSON parse errors and drops the connection. What should the developer change?",
+      "type": "single_select",
+      "options": {
+        "A": "Configure the client to reconnect with exponential backoff whenever a parse error occurs so the fault is retried.",
+        "B": "Buffer the log lines and flush them to stdout between JSON-RPC responses so the two streams never interleave.",
+        "C": "Increase the MAX_MCP_OUTPUT_TOKENS limit on the client so larger tool results are accepted without truncation.",
+        "D": "Write the debug output to stderr, keeping stdout reserved for the JSON-RPC messages the client reads."
+      },
+      "correct_answer": "D",
+      "explanation": "In stdio MCP servers, stdout is reserved exclusively for JSON-RPC protocol messages. Debug output (print statements) must go to stderr to avoid corrupting the JSON-RPC message stream that the client parses."
+    },
+    {
+      "number": 34,
+      "question": "An application implements the memory tool client-side, executing every file operation Claude requests against its own storage. Which TWO safeguards should the implementation enforce?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Resolve every requested path to its canonical form and reject any path that escapes the memory directory.",
+        "B": "Rely on the model's tendency to refuse writing sensitive information, since training already handles this reliably.",
+        "C": "Validate content to strip sensitive data before writing files, and cap how large memory files can grow.",
+        "D": "Add a system-prompt instruction telling Claude to only ever request safe paths inside the memory directory."
+      },
+      "correct_answers": ["A", "C"],
+      "explanation": "Client-side memory implementations must enforce path traversal prevention (canonicalize and reject escapes) and content validation with size caps. Model behavior and system prompt instructions are not reliable security controls."
+    },
+    {
+      "number": 35,
+      "question": "An application calling the Messages API receives an assistant response with stop_reason tool_use that contains three tool_use blocks for its custom client tools. How should the application return the execution results to Claude?",
+      "type": "single_select",
+      "options": {
+        "A": "Append the tool_result blocks to the assistant message that contained the tool_use blocks and resend it.",
+        "B": "Execute all three calls and return a tool_result block for each one, together in the next single user message.",
+        "C": "Execute only the first tool_use block and return its result, since Claude re-requests the remaining calls next turn.",
+        "D": "Return each tool_result in its own user message, sending a separate API request after each execution finishes."
+      },
+      "correct_answer": "B",
+      "explanation": "When Claude returns multiple tool_use blocks, the application should execute all of them and return all tool_result blocks together in a single user message in the next API call. Each tool_result references its corresponding tool_use by ID."
+    },
+    {
+      "number": 36,
+      "question": "An agent script built with the Python Agent SDK fails at startup with an \"API key not found\" error. A .env file containing ANTHROPIC_API_KEY exists in the project directory. What resolves the error?",
+      "type": "single_select",
+      "options": {
+        "A": "Force-reinstall the SDK package, because this error means the bundled Claude Code binary is missing from the installation.",
+        "B": "Move the .env file into the ~/.claude/ directory, where the SDK automatically loads environment configuration at startup.",
+        "C": "Pass the API key directly as an argument to the query() function, because the SDK never reads credentials from environment variables.",
+        "D": "Export ANTHROPIC_API_KEY in the shell or load the .env file in code first, since the SDK reads only the process environment."
+      },
+      "correct_answer": "D",
+      "explanation": "The Agent SDK reads the API key from the process environment (os.environ), not from .env files automatically. The key must be exported in the shell or the .env file must be loaded programmatically (e.g., using python-dotenv) before the SDK initializes."
+    },
+    {
+      "number": 37,
+      "question": "A team's custom Skill instructs Claude to call MCP tools using bare tool names such as create_issue. In sessions with several MCP servers connected, Claude intermittently fails to locate the tools. Which authoring change addresses this?",
+      "type": "single_select",
+      "options": {
+        "A": "Add a system prompt instruction telling Claude to retry any failed tool call until it succeeds.",
+        "B": "Reduce the configuration to a single connected MCP server so tool names cannot be ambiguous.",
+        "C": "Prefix each tool reference in the Skill with its MCP server name, using the ServerName:tool_name format.",
+        "D": "Copy the complete tool definitions from every connected MCP server into the Skill's SKILL.md body."
+      },
+      "correct_answer": "C",
+      "explanation": "When multiple MCP servers are connected, tool names can be ambiguous. Prefixing tool references with the server name (ServerName:tool_name) ensures Claude targets the correct server's tool."
+    },
+    {
+      "number": 38,
+      "question": "A team writes a Claude Code skill that deploys the application to production. Claude sometimes triggers the skill on its own when deployment is merely discussed in conversation. The team wants the skill to run only when a person explicitly invokes it with /deploy. Which configuration achieves this?",
+      "type": "single_select",
+      "options": {
+        "A": "Delete the description field from the frontmatter so Claude cannot discover the skill.",
+        "B": "Set disable-model-invocation: true in the skill's YAML frontmatter.",
+        "C": "Move the skill from the project's .claude/skills/ directory into the user-level skills directory.",
+        "D": "Add a sentence in the skill body instructing Claude never to run the deployment steps unprompted."
+      },
+      "correct_answer": "B",
+      "explanation": "Setting disable-model-invocation: true in the skill's YAML frontmatter prevents Claude from automatically invoking the skill based on conversation context. The skill can then only be triggered by explicit user invocation via the slash command."
+    },
+    {
+      "number": 39,
+      "question": "A developer configures manual extended thinking on a supported Claude model with budget_tokens set to 10,000. Monitoring shows that on many requests Claude uses far fewer thinking tokens than the configured budget. What is the accurate understanding of this behavior?",
+      "type": "single_select",
+      "options": {
+        "A": "Treat budget_tokens as an upper bound: Claude may use fewer thinking tokens than budgeted, with max_tokens capping total output.",
+        "B": "Expect billing at the full 10,000-token budget on every request, regardless of how many thinking tokens Claude actually generated.",
+        "C": "Add a system prompt instruction requiring Claude to consume the entire thinking budget before producing its final answer.",
+        "D": "Assume a configuration error, since a request with a thinking budget enabled always consumes the full budgeted token count."
+      },
+      "correct_answer": "A",
+      "explanation": "budget_tokens is an upper bound on thinking tokens. Claude may use fewer tokens than budgeted when the task doesn't require extensive reasoning. Billing is based on actual tokens generated, not the budget ceiling."
+    },
+    {
+      "number": 40,
+      "question": "An agent's reasoning quality declines during long sessions even though token usage stays well under the context window limit. Which TWO practices address this degradation?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Delegate high-volume research and exploration to subagents that return only condensed findings.",
+        "B": "Add a system prompt instruction directing the model to disregard older tool outputs when reasoning.",
+        "C": "Prune verbose tool results after they are used and compact older history into concise summaries.",
+        "D": "Move the workload to a model with a larger context window and keep the accumulated history unchanged."
+      },
+      "correct_answers": ["A", "C"],
+      "explanation": "Reasoning quality degrades with accumulated verbose context even within limits. Delegating to subagents (A) keeps the parent agent's context clean, and pruning/compacting history (C) reduces noise. Simply using a larger context window doesn't address the quality of the context."
+    },
+    {
+      "number": 41,
+      "question": "A team that calls the Claude API directly must migrate its integration to Amazon Bedrock to comply with a corporate cloud mandate. What should the team expect the migration to involve?",
+      "type": "single_select",
+      "options": {
+        "A": "Rewrite every prompt from scratch, because models served through Bedrock behave fundamentally differently from the direct API.",
+        "B": "Accept a permanent capability downgrade, since third-party platforms only ever receive older Claude model generations.",
+        "C": "Reuse the existing Anthropic API key unchanged, since Bedrock forwards requests directly to Anthropic's endpoint.",
+        "D": "Update authentication, endpoints, SDK configuration, and model identifiers while keeping prompts largely unchanged."
+      },
+      "correct_answer": "D",
+      "explanation": "Migrating to Bedrock requires updating authentication (to AWS credentials), endpoints, SDK configuration, and model identifiers, but prompts can remain largely unchanged as Claude models behave consistently across platforms."
+    },
+    {
+      "number": 42,
+      "question": "A team building on the Claude API wants Claude to fetch live exchange rates from an external financial data service during each request. They are deciding whether to package this capability as a custom Skill. Which approach is correct?",
+      "type": "single_select",
+      "options": {
+        "A": "Package it as a Skill and list the required HTTP client library so the container installs it at runtime before each request.",
+        "B": "Package it as a Skill whose bundled script calls the financial service, since the code execution container has outbound internet access.",
+        "C": "Expose the rate lookup as a custom tool the application executes, because API Skills run in a container without network access.",
+        "D": "Embed the current exchange rates in the Skill's reference files so Claude reads them whenever the Skill is triggered."
+      },
+      "correct_answer": "C",
+      "explanation": "Skills run in a sandboxed container without outbound network access. Fetching live data from external services requires a custom tool that the application executes server-side, where it can make HTTP requests to external APIs."
+    },
+    {
+      "number": 43,
+      "question": "A document-review service accepts user uploads that vary enormously in size, and the team wants to know each request's input token count, and therefore its approximate cost, before submitting it to the Messages API. Which approach is appropriate?",
+      "type": "single_select",
+      "options": {
+        "A": "Divide the prompt's character count by four locally, since that ratio is exact and identical across every Claude model.",
+        "B": "Call the token counting endpoint with the same request payload; it returns an input token estimate at no charge.",
+        "C": "Send the request with max_tokens set to 1, read input_tokens from usage, then resend the full request if the cost looks acceptable.",
+        "D": "Look up the model's documented context window size and treat that value as the token consumption of every request."
+      },
+      "correct_answer": "B",
+      "explanation": "The token counting endpoint accepts the same request payload and returns the input token count at no charge, allowing cost estimation before submitting the actual request."
+    },
+    {
+      "number": 44,
+      "question": "A long-running agent uses the context editing tool result clearing strategy to stay within its context window, but Claude occasionally needs facts from tool results that were already cleared and ends up repeating earlier work. Which change preserves access to that information?",
+      "type": "single_select",
+      "options": {
+        "A": "Add the memory tool so Claude can save essential facts to persistent files before results are cleared and read them back later.",
+        "B": "Disable the clearing strategy entirely so every tool result remains in the conversation for the whole session.",
+        "C": "Instruct Claude in the system prompt to memorize cleared results, since the model retains what it has previously processed.",
+        "D": "Raise max_tokens so Claude has enough room to restate cleared information in each of its responses."
+      },
+      "correct_answer": "A",
+      "explanation": "The memory tool allows Claude to save essential facts to persistent files before tool results are cleared, and read them back when needed. This preserves important information while still benefiting from context window management through clearing."
+    },
+    {
+      "number": 45,
+      "question": "A developer defines a custom code-reviewer subagent in an Agent SDK application, but Claude keeps handling review tasks itself instead of delegating. Agent tool invocations are already auto-approved. What is the most effective fix?",
+      "type": "single_select",
+      "options": {
+        "A": "Rename the subagent so its name lexically overlaps with keywords in user prompts, since routing is keyword-based.",
+        "B": "Assign the subagent a larger model so Claude treats it as more capable and routes work to it.",
+        "C": "Rewrite the subagent's description to state specifically what tasks it handles and when it should be used.",
+        "D": "Raise the subagent's maxTurns limit so it can accept more delegated tasks in a session."
+      },
+      "correct_answer": "C",
+      "explanation": "The subagent's description is the primary mechanism Claude uses to decide when to delegate. Rewriting it to clearly state what tasks it handles and when to use it is the most effective way to improve delegation behavior."
+    },
+    {
+      "number": 46,
+      "question": "A team sends lengthy PDF documents to Claude through the Messages API. Before dispatching production requests, they want to know each request's exact input token count so they can forecast cost, without incurring standard message charges. Which approach achieves this?",
+      "type": "single_select",
+      "options": {
+        "A": "Call the token counting endpoint with the prepared request and read the returned token total.",
+        "B": "Send each request with max_tokens set to 1 and read input_tokens from the response's usage object.",
+        "C": "Inspect the Content-Length header of the request payload and convert bytes to tokens at a fixed ratio.",
+        "D": "Divide the raw character count of each PDF's extracted text by four to approximate the token total."
+      },
+      "correct_answer": "A",
+      "explanation": "The token counting endpoint returns the input token count for a prepared request without incurring message charges. This is especially useful for PDFs where character-to-token ratios are unreliable."
+    },
+    {
+      "number": 47,
+      "question": "An agent runs every step, including routine log summarization and simple lookups, on its most capable model, driving up cost. Complex planning steps genuinely need that model. Which architectural change best reduces cost without degrading the complex work?",
+      "type": "single_select",
+      "options": {
+        "A": "Switch the entire agent, including its planning steps, to the cheapest available model.",
+        "B": "Reduce max_tokens on every request so each model call generates fewer output tokens.",
+        "C": "Move the agent's interactive tool-call loop to the Message Batches API for the discount.",
+        "D": "Delegate the routine subtasks to subagents configured with a faster, lower-cost model."
+      },
+      "correct_answer": "D",
+      "explanation": "Delegating routine subtasks to subagents running on cheaper models preserves the capable model for complex planning while reducing overall cost. This is the multi-model architecture pattern recommended for cost optimization."
+    },
+    {
+      "number": 48,
+      "question": "An insurance claims application sends Claude a 30,000-token policy document for analysis. The prompt places the analysis instructions and question first, followed by the document, and responses often miss relevant clauses. Which structural change does Anthropic recommend?",
+      "type": "single_select",
+      "options": {
+        "A": "Run a preliminary request that condenses the document to a short summary, then analyze the summary.",
+        "B": "Place the long document at the start of the prompt, with the instructions and question after it.",
+        "C": "Increase max_tokens so Claude has more room to work through the full document.",
+        "D": "Wrap the question in XML tags while keeping the current instruction-first ordering."
+      },
+      "correct_answer": "B",
+      "explanation": "Anthropic recommends placing long documents before the instructions and questions. This 'document first, question last' structure helps Claude attend more effectively to the document content when generating its response."
+    },
+    {
+      "number": 49,
+      "question": "An engineer documents a permissions rule in a project's .claude/settings.json by adding a // comment above it. At the next session start, Claude Code reports a Settings Error for the file. What should the engineer do?",
+      "type": "single_select",
+      "options": {
+        "A": "Move the permissions rule to the user-level ~/.claude/settings.json file, since permissions keys are only valid at that scope.",
+        "B": "Move the annotated rule into .claude/settings.local.json, which accepts comments because it is excluded from strict validation.",
+        "C": "Add a $schema field as the first key of the project settings file so it validates against the published schema.",
+        "D": "Remove the // comment from .claude/settings.json and document the rationale in CLAUDE.md or a README."
+      },
+      "correct_answer": "D",
+      "explanation": "JSON does not support comments. The // comment causes a parse error. The fix is to remove the comment from settings.json and document the rationale in CLAUDE.md or a README instead."
+    },
+    {
+      "number": 50,
+      "question": "An application must translate several hundred independent product descriptions within minutes, but a sequential loop of Messages API calls is too slow. Which TWO changes deliver the speedup?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Enable streaming on every request so each call's total generation time decreases.",
+        "B": "Move the workload to the Message Batches API so results come back sooner.",
+        "C": "Bound the number of in-flight requests so the client stays within rate limits.",
+        "D": "Issue the requests concurrently with asynchronous I/O so independent calls overlap."
+      },
+      "correct_answers": ["C", "D"],
+      "explanation": "Issuing requests concurrently with async I/O (D) provides the speedup by overlapping independent calls. Bounding in-flight requests (C) ensures the client stays within rate limits and avoids throttling. Streaming doesn't reduce total generation time, and Batches API is for cost savings, not speed."
+    },
+    {
+      "number": 51,
+      "question": "A team caches Messages API requests using an explicit cache breakpoint placed on a message block. Which TWO changes between consecutive requests invalidate that cached prefix?",
+      "type": "multiple_select",
+      "options": {
+        "A": "Modify the tool_choice setting used in the request.",
+        "B": "Add or remove an image within the cached portion of the prompt.",
+        "C": "Increase the max_tokens value on the follow-up request.",
+        "D": "Edit the user message that appears after the last cache breakpoint."
+      },
+      "correct_answers": ["A", "B"],
+      "explanation": "The cache key includes tool_choice and all content up to the cache breakpoint. Modifying tool_choice (A) or changing content within the cached portion (B) invalidates the cache. max_tokens (C) does not affect the cached prefix, and changes after the breakpoint (D) don't invalidate it."
+    },
+    {
+      "number": 52,
+      "question": "An engineer building an audit pipeline reruns archived requests against a Claude model to reproduce past outputs. Despite identical inputs and unchanged sampling parameters, the regenerated text sometimes differs from the original. How should the engineer handle this?",
+      "type": "single_select",
+      "options": {
+        "A": "Hold max_tokens at a fixed constant value, which forces the model to select the identical token sequence on every run.",
+        "B": "Enable prompt caching so the cached prompt prefix locks in an identical generation path across repeated calls.",
+        "C": "Retry each request until two consecutive responses match exactly, then record that text as the canonical output.",
+        "D": "Design the pipeline to tolerate variation, validating regenerated outputs against requirements rather than exact text."
+      },
+      "correct_answer": "D",
+      "explanation": "Claude's outputs are non-deterministic even with identical inputs and parameters. The pipeline should be designed to tolerate variation by validating against requirements rather than expecting exact text reproduction."
+    },
+    {
+      "number": 53,
+      "question": "A developer working in a shared repository wants Claude Code to auto-approve their personal lint and test commands for that project only, without those settings applying to teammates who clone the repository. Where should this configuration be placed?",
+      "type": "single_select",
+      "options": {
+        "A": "Place the rules in the project's .claude/settings.local.json file, which is kept out of version control.",
+        "B": "Add the preferences to the project CLAUDE.md file so Claude reads them at the start of each session.",
+        "C": "Deploy the rules through the managed settings file on the developer's machine so no other file can override them.",
+        "D": "Commit the rules to the project's shared .claude/settings.json file so they load for every clone."
+      },
+      "correct_answer": "A",
+      "explanation": "settings.local.json is the project-level file for personal configuration that is not committed to version control. It allows auto-approve rules specific to one developer without affecting teammates."
+    }
+  ]
+}

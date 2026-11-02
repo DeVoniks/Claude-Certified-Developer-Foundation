@@ -1,0 +1,696 @@
+{
+  "exam_title": "Claude Certified Developer - Foundations Practice Exam",
+  "source": "Udemy - Claude Certified Developer - Foundations Practice Exam Pack",
+  "total_questions": 53,
+  "questions": [
+    {
+      "number": 1,
+      "question": "A team classifies insurance claim documents through a fixed pipeline of sequenced LLM calls. A new troubleshooting feature must handle requests where the required steps and tools cannot be predicted in advance. Which architecture fits the new feature, and what is its tradeoff?",
+      "type": "single_select",
+      "options": [
+        "A) Build an agent that directs its own steps and tool use, accepting higher latency and cost in exchange for flexibility.",
+        "B) Build an agent, which also guarantees deterministic outputs and lower per-request cost than the pipeline.",
+        "C) Adopt a multi-agent supervisor hierarchy, because a single agent instance cannot invoke more than one tool per task.",
+        "D) Enumerate every possible troubleshooting path as predefined branches in the fixed workflow, since coded paths always cost less to run."
+      ],
+      "correct_answer": "A",
+      "explanation": "Agents autonomously decide their own steps and tool use, which is ideal when required steps cannot be predicted. The tradeoff is higher latency and cost compared to fixed workflows."
+    },
+    {
+      "number": 2,
+      "question": "A team plans to install a third-party Agent Skill from an external repository into a production agent. Which TWO practices should they adopt before deployment?",
+      "type": "multiple_select",
+      "options": [
+        "A) Pin the Skill to a specific version so upstream updates cannot silently change production behavior.",
+        "B) Review every file bundled with the Skill, checking for network calls or operations that do not match its stated purpose.",
+        "C) Rely on Claude's built-in safety training to detect and refuse any malicious instructions the Skill might contain.",
+        "D) Grant the Skill's execution container broad tool access up front so it never encounters permission errors mid-task."
+      ],
+      "correct_answers": ["A", "B"],
+      "explanation": "Pinning to a specific version prevents unexpected changes, and reviewing bundled files catches malicious or unintended operations. Relying on built-in safety training is insufficient, and broad tool access violates the principle of least privilege."
+    },
+    {
+      "number": 3,
+      "question": "A team building an agent with the Agent SDK wants certain checks to run reliably around tool calls without depending on model compliance. Which TWO capabilities do hooks provide?",
+      "type": "multiple_select",
+      "options": [
+        "A) Guarantee that the model produces identical outputs across runs by constraining its sampling at each lifecycle event.",
+        "B) Run custom code deterministically at defined lifecycle events, such as before or after a tool call.",
+        "C) Block a tool call before it executes by returning a deny decision from a PreToolUse hook.",
+        "D) Inject repeated instructions into the system prompt so the model follows the required steps with near-certain reliability."
+      ],
+      "correct_answers": ["B", "C"],
+      "explanation": "Hooks run custom code at lifecycle events (like before/after tool calls) and PreToolUse hooks can deny tool calls before execution. Hooks don't constrain model sampling or inject prompt instructions."
+    },
+    {
+      "number": 4,
+      "question": "A development team wants Claude Code to follow the project's coding conventions and run the correct build commands in every session, for every team member, without restating them each time. Where should these instructions be placed?",
+      "type": "single_select",
+      "options": [
+        "A) Pass the instructions with the --append-system-prompt flag, which stores them permanently for future sessions.",
+        "B) State the instructions once in a session and rely on Claude to carry conversation history into later sessions.",
+        "C) Add the conventions to each developer's ~/.claude/settings.json file, since settings govern how Claude Code behaves.",
+        "D) Commit a project CLAUDE.md file to the repository so it loads into context at the start of each session."
+      ],
+      "correct_answer": "D",
+      "explanation": "CLAUDE.md is the project-level configuration file that Claude Code reads at session start. It's version-controlled and shared across team members."
+    },
+    {
+      "number": 5,
+      "question": "Which TWO design practices help prevent user-pasted document content and unrelated earlier conversation from unduly influencing a Claude application's outputs?",
+      "type": "multiple_select",
+      "options": [
+        "A) Add an instruction at the start of each new task telling the model to disregard everything earlier in the conversation.",
+        "B) Switch to a model with a larger context window so all tasks and documents coexist without interfering.",
+        "C) Wrap pasted documents in delimited tags and instruct the model that tagged content is data to analyze, not instructions.",
+        "D) Start a fresh session or clear the context whenever the application moves to a new, independent task."
+      ],
+      "correct_answers": ["C", "D"],
+      "explanation": "Using XML tags to delimit data from instructions prevents prompt injection from pasted content. Starting fresh sessions for new tasks prevents cross-task contamination."
+    },
+    {
+      "number": 6,
+      "question": "A team is evaluating Claude Managed Agents for long-running, asynchronous agent tasks. Which TWO of the following can the team correctly expect from this offering?",
+      "type": "multiple_select",
+      "options": [
+        "A) Rely on it to guarantee that agent sessions produce deterministic, identical outputs across repeated runs of the same task.",
+        "B) Adopt Claude Managed Agents for a pre-built, configurable agent harness in managed infrastructure instead of building an agent loop.",
+        "C) Import it as a Python or TypeScript client library that runs the agent loop and tool execution inside the team's own application process.",
+        "D) Run stateful sessions that maintain context across interactions and can be steered or interrupted mid-execution by sending additional events."
+      ],
+      "correct_answers": ["B", "D"],
+      "explanation": "Managed Agents provide pre-built agent infrastructure (no need to build your own loop) and support stateful sessions that can be steered mid-execution. They don't guarantee deterministic outputs and run on Anthropic's infrastructure, not in-process."
+    },
+    {
+      "number": 7,
+      "question": "A long-running agent makes dozens of tool calls per task, and the accumulated tool results push conversations toward the context window limit before tasks finish. Which context management pattern lets the agent keep working past that point?",
+      "type": "single_select",
+      "options": [
+        "A) Increase the max_tokens parameter on each request so the model can accommodate the growing conversation history.",
+        "B) Summarize earlier turns and clear stale tool results, preserving the key state the task still needs.",
+        "C) Enable streaming so tokens are delivered incrementally rather than held in the context window.",
+        "D) Lower the temperature so the model produces terser responses that consume fewer context tokens."
+      ],
+      "correct_answer": "B",
+      "explanation": "Summarizing earlier turns and clearing stale tool results is the standard context management pattern for long-running agents. max_tokens controls output length not context, streaming doesn't reduce context usage, and temperature doesn't affect context consumption."
+    },
+    {
+      "number": 8,
+      "question": "A TypeScript service streams tool-use responses from the Messages API. Calling JSON.parse on the partial_json field of each input_json_delta event throws syntax errors, even though the final tool input is valid. How should the client handle these events?",
+      "type": "single_select",
+      "options": [
+        "A) Add a system prompt instruction telling the model to emit each tool input delta as a complete, valid JSON object.",
+        "B) Wrap each parse call in a retry loop that re-requests the stream until every delta arrives as parseable JSON.",
+        "C) Switch off streaming for any request that defines tools, since tool input cannot be delivered over an SSE stream.",
+        "D) Accumulate the partial_json fragments across deltas and parse the complete string once the content block finishes."
+      ],
+      "correct_answer": "D",
+      "explanation": "Streaming delivers partial JSON fragments that are not individually valid. The client must accumulate all partial_json deltas and parse the complete string only after the content_block_stop event."
+    },
+    {
+      "number": 9,
+      "question": "A prompt concatenates operating instructions, a long reference document, and the end user's message into a single plain-text block. Claude occasionally follows sentences from the document as if they were instructions. Which structural change does Anthropic recommend?",
+      "type": "single_select",
+      "options": [
+        "A) Shorten the reference document so the operating instructions visually stand out from the content.",
+        "B) Wrap the instructions, the document, and the user input in separate, consistently named XML tags.",
+        "C) Place all three sections in the system prompt so Claude treats every part with equal authority.",
+        "D) Raise the temperature so Claude interprets the different prompt sections more flexibly."
+      ],
+      "correct_answer": "B",
+      "explanation": "Anthropic recommends using XML tags to clearly separate instructions from data. This prevents the model from treating document content as instructions (prompt injection)."
+    },
+    {
+      "number": 10,
+      "question": "A developer budgets context usage for a Claude application by summing only the token counts of user and assistant message text, but requests hit the context window limit far sooner than the estimates predicted. How should the developer revise the estimate?",
+      "type": "single_select",
+      "options": [
+        "A) Keep counting input message text only, since the context window applies to input tokens and generated output never consumes it.",
+        "B) Add extended thinking tokens to the estimate, but exclude tool definitions and system prompts, which are injected server-side at no window cost.",
+        "C) Include the system prompt, tool definitions, tool results, and the turn's generated output, including extended thinking, in the estimate.",
+        "D) Add the tokens of images and documents to the estimate, but exclude system prompts and tool definitions, which are processed outside the window."
+      ],
+      "correct_answer": "C",
+      "explanation": "The context window includes everything: system prompt, tool definitions, all messages (user, assistant, tool results), and generated output including extended thinking tokens."
+    },
+    {
+      "number": 11,
+      "question": "A developer is implementing the execution loop for custom client-side tools called through the Messages API. Which TWO practices are correct?",
+      "type": "multiple_select",
+      "options": [
+        "A) Report a failed execution with a tool_result that sets is_error to true and describes what went wrong.",
+        "B) Send results back in a dedicated tool role message, since the API separates tool output from user content.",
+        "C) When Claude calls several tools in one turn, return the first result now and supply the remaining ones in later messages.",
+        "D) Return each result as a tool_result block in the next user message, matched to its call by tool_use_id."
+      ],
+      "correct_answers": ["A", "D"],
+      "explanation": "Failed tool executions should use is_error: true. Tool results are returned as tool_result content blocks in a user-role message, matched by tool_use_id. There is no dedicated tool role, and all results from a multi-tool turn should be returned together."
+    },
+    {
+      "number": 12,
+      "question": "A developer implements an agent's tool-use loop directly against the Messages API rather than using an agent framework. Which TWO statements correctly describe how the loop operates?",
+      "type": "multiple_select",
+      "options": [
+        "A) The application executes each tool the model requests and returns the output as a tool result in the next request.",
+        "B) The API runs client-defined tools on Anthropic's servers, so the application only reads the final answer.",
+        "C) Each iteration starts a brand-new conversation, so earlier tool results are discarded before the next model invocation.",
+        "D) The application keeps looping while the response's stop reason is tool_use, treating an end_turn response as final."
+      ],
+      "correct_answers": ["A", "D"],
+      "explanation": "The client executes tools locally and returns results. The loop continues while stop_reason is 'tool_use' and terminates on 'end_turn'. The API doesn't execute client tools, and conversation history is maintained across iterations."
+    },
+    {
+      "number": 13,
+      "question": "A backend service parses Claude's responses as JSON before feeding a downstream pipeline. The prompt instructs Claude to reply only in JSON, yet parsing still fails intermittently when responses include explanatory text or malformed fields. Which change most reliably fixes this?",
+      "type": "single_select",
+      "options": [
+        "A) Use structured outputs to supply a JSON schema in the request so the API constrains responses to it.",
+        "B) Prefill the assistant turn with an opening brace so the model continues with a JSON object.",
+        "C) Strengthen the prompt wording to demand valid JSON and add a retry loop that resends failed responses.",
+        "D) Increase max_tokens substantially so the JSON is never truncated before the closing brace."
+      ],
+      "correct_answer": "A",
+      "explanation": "Structured outputs (JSON mode with a schema) constrain the API to produce only valid JSON matching the schema. Prefilling helps but doesn't guarantee conformance; stronger prompts are unreliable."
+    },
+    {
+      "number": 14,
+      "question": "A logistics company's dispatch service calls the Claude API and begins intermittently receiving HTTP 529 responses whose error type is overloaded_error. What do these responses indicate, and how should the service handle them?",
+      "type": "single_select",
+      "options": [
+        "A) Treat the responses as invalid credentials and rotate the API key before allowing any further requests.",
+        "B) Treat the responses as transient server-side overload and retry the same requests with exponential backoff.",
+        "C) Treat the responses as malformed requests and correct the payload before resending, since retries of bad input fail.",
+        "D) Treat the responses as organization rate limiting and reduce concurrency until usage falls within workspace limits."
+      ],
+      "correct_answer": "B",
+      "explanation": "HTTP 529 with overloaded_error indicates transient server-side overload. The correct handling is to retry with exponential backoff."
+    },
+    {
+      "number": 15,
+      "question": "A team's Claude application exposes fifteen narrowly scoped tools (create_pr, review_pr, merge_pr, and similar), each with a one-line description. Claude frequently selects the wrong tool or supplies incorrect parameters. Which change most directly improves tool selection?",
+      "type": "single_select",
+      "options": [
+        "A) Consolidate related operations into fewer tools with an action parameter and expand descriptions to say when each tool should be used.",
+        "B) Rename every tool to a short single-word name so the model can scan the tool list more quickly when choosing one to call.",
+        "C) Force a specific tool with tool_choice on every incoming request so the model never decides between the available tools itself.",
+        "D) Lower the temperature so tool selection becomes more deterministic and the model stops making inconsistent choices."
+      ],
+      "correct_answer": "A",
+      "explanation": "Consolidating related tools and expanding descriptions helps the model distinguish between tools. Too many narrowly scoped tools with minimal descriptions cause confusion."
+    },
+    {
+      "number": 16,
+      "question": "An application enables prompt caching and computes per-request input cost from the input_tokens field of the Messages API usage object. After the change, the reported input counts fall far below the actual prompt sizes. How should the team correct its cost tracking?",
+      "type": "single_select",
+      "options": [
+        "A) Treat the drop as expected because cache reads are free and cached tokens are therefore excluded entirely from usage reporting.",
+        "B) Sum input_tokens with cache_read_input_tokens and cache_creation_input_tokens; input_tokens covers only tokens after the last cache breakpoint.",
+        "C) File the discrepancy as an API defect, since usage fields must always report the full prompt token count regardless of caching.",
+        "D) Multiply input_tokens by the cache write multiplier, since the field already nets out both cache reads and cache writes at their discounted rates."
+      ],
+      "correct_answer": "B",
+      "explanation": "With prompt caching, input_tokens only counts non-cached tokens. To get the full picture, sum input_tokens + cache_read_input_tokens + cache_creation_input_tokens."
+    },
+    {
+      "number": 17,
+      "question": "An application deserializes Claude's tool_use inputs into typed objects. Intermittently a required field is missing or a value has the wrong type, crashing the deserializer. The tool is a custom client tool with a simple, flat input_schema. Which change guarantees that tool inputs conform to the tool's JSON Schema?",
+      "type": "single_select",
+      "options": [
+        "A) Provide input_examples on the tool definition showing fully populated, correctly typed inputs.",
+        "B) Set tool_choice to the any type so the API validates each tool call's input against its schema.",
+        "C) Add a firm system prompt instruction that every tool call must include all required fields with correct types.",
+        "D) Add strict: true to the tool definition so the API constrains generation to inputs matching the schema."
+      ],
+      "correct_answer": "D",
+      "explanation": "Setting strict: true on the tool definition enables constrained decoding, guaranteeing that tool inputs conform to the JSON Schema."
+    },
+    {
+      "number": 18,
+      "question": "An application routes traffic across several Claude models and needs to determine each available model's token limits and capabilities at runtime instead of hardcoding them. Which approach is correct?",
+      "type": "single_select",
+      "options": [
+        "A) Query the Models API, whose response includes token limits and a capabilities object for each available model.",
+        "B) Send a minimal Messages request to each model and inspect the usage field in the response for its limits.",
+        "C) Call the token counting endpoint, which returns each model's maximum input and output token limits along with the count.",
+        "D) Rely on the client SDK's bundled model catalog, which is kept current automatically between SDK releases."
+      ],
+      "correct_answer": "A",
+      "explanation": "The Models API provides model metadata including token limits and capabilities at runtime."
+    },
+    {
+      "number": 19,
+      "question": "A developer wants Claude to follow a fixed persona and formatting rules on every turn of a Messages API conversation. Where should these instructions be placed so they apply from the start of the conversation?",
+      "type": "single_select",
+      "options": [
+        "A) Insert a message with role system as the first entry in the messages array.",
+        "B) Prepend the full instructions to every user message before sending it.",
+        "C) Set the instructions in the top-level system parameter of the request.",
+        "D) Prefill an assistant message at the end of messages with the persona text."
+      ],
+      "correct_answer": "C",
+      "explanation": "The system parameter is the correct place for persistent instructions like persona and formatting rules. There is no 'system' role in messages array."
+    },
+    {
+      "number": 20,
+      "question": "A repository already uses AGENTS.md to hold shared instructions for other coding agents. The team wants Claude Code to follow the same instructions without maintaining duplicate content. What is the recommended approach?",
+      "type": "single_select",
+      "options": [
+        "A) Run /import to append a one-time copy of the AGENTS.md instructions to the project's CLAUDE.md file.",
+        "B) Duplicate the AGENTS.md content into a new CLAUDE.md and update both files whenever conventions change.",
+        "C) Rely on Claude Code's automatic discovery, since it reads AGENTS.md alongside CLAUDE.md at session start.",
+        "D) Create a CLAUDE.md that imports AGENTS.md using the @AGENTS.md syntax, so both tools read one file."
+      ],
+      "correct_answer": "C",
+      "explanation": "Claude Code automatically discovers and reads AGENTS.md files alongside CLAUDE.md at session start, so no duplication or import is needed."
+    },
+    {
+      "number": 21,
+      "question": "A developer building a chat interface wants Claude's response to appear token by token as it is generated, and asks whether the integration must open a websocket connection to the Claude API. What is the correct approach?",
+      "type": "single_select",
+      "options": [
+        "A) Issue repeated Messages requests with small max_tokens values and stitch the truncated partial responses together on the client side.",
+        "B) Set stream to true on the Messages request; the API returns server-sent events over standard HTTP, which the SDK parses, so no websocket is needed.",
+        "C) Submit the conversation through the Message Batches API, since batch processing streams each response back to the client incrementally as it is generated.",
+        "D) Enable fast mode with the speed parameter, which switches the delivery model from complete responses to incremental token-by-token chunks."
+      ],
+      "correct_answer": "B",
+      "explanation": "The Messages API supports streaming via server-sent events (SSE) over standard HTTP. No websocket is needed."
+    },
+    {
+      "number": 22,
+      "question": "A team is building a multi-tenant document application on the Files API. Each customer uploads files that must never be readable by any other customer. Which design correctly enforces this isolation?",
+      "type": "single_select",
+      "options": [
+        "A) Store all files in the organization's Default Workspace and instruct Claude in the system prompt to use only the current user's documents.",
+        "B) Create a separate workspace per tenant and keep the mapping between users and their file IDs server-side in the application.",
+        "C) Keep every tenant in one shared workspace but issue each tenant a distinct API key, so uploads stay separated per key.",
+        "D) Accept file IDs from end users in requests and validate the ID format before passing them to the Messages API."
+      ],
+      "correct_answer": "B",
+      "explanation": "Separate workspaces per tenant enforce isolation at the API level. System prompt instructions are not a security boundary, and API keys don't partition file access within a workspace."
+    },
+    {
+      "number": 23,
+      "question": "A long-running agent's conversation history is approaching the context window limit partway through a complex task. The team wants the agent to keep working without losing earlier decisions, constraints, and progress. Which technique addresses this?",
+      "type": "single_select",
+      "options": [
+        "A) Add a system prompt instruction telling the model to disregard the earlier turns it no longer needs.",
+        "B) Delete the oldest half of the message list before each request, without regard to what those older turns contain.",
+        "C) Raise max_tokens so the model has a larger output budget available to keep the task moving on each turn.",
+        "D) Compact the conversation, replacing the earlier message history with a generated summary of decisions and progress."
+      ],
+      "correct_answer": "D",
+      "explanation": "Conversation compaction (summarizing earlier history) preserves key decisions and progress while freeing context space. Blindly deleting turns loses important context, and max_tokens controls output, not context."
+    },
+    {
+      "number": 24,
+      "question": "A team shuts down a Claude application that has been replaced: user traffic is migrated to the successor system, stored conversation data is archived per retention policy, and the application's API keys are revoked. Which systems life cycle phase does this activity represent?",
+      "type": "single_select",
+      "options": [
+        "A) Classify the activity as the system design phase.",
+        "B) Classify the activity as the operations and maintenance phase.",
+        "C) Classify the activity as the implementation phase.",
+        "D) Classify the activity as the disposal phase of the systems life cycle."
+      ],
+      "correct_answer": "D",
+      "explanation": "Shutting down a system, migrating traffic, archiving data, and revoking credentials are all disposal phase activities."
+    },
+    {
+      "number": 25,
+      "question": "A data-extraction prompt includes ten near-identical few-shot examples, all showing simple single-page invoices. Claude reproduces their formatting exactly but mishandles multi-page invoices and credit notes it was never shown. What change to the examples is recommended?",
+      "type": "single_select",
+      "options": [
+        "A) Increase the temperature so the model deviates from the example patterns on unfamiliar input types.",
+        "B) Remove all examples and describe the output format in prose only, since examples cause overfitting to inputs.",
+        "C) Curate 3 to 5 diverse examples that cover edge cases, wrapped in example tags to separate them from instructions.",
+        "D) Add ten more examples identical to the existing ones so the desired output pattern is reinforced more strongly."
+      ],
+      "correct_answer": "C",
+      "explanation": "Anthropic recommends 3-5 diverse examples covering edge cases, wrapped in XML example tags. Too many similar examples cause overfitting to the narrow pattern shown."
+    },
+    {
+      "number": 26,
+      "question": "An agent's main conversation accumulates large volumes of search output and file contents during research subtasks, and none of that material is referenced again after each subtask completes. Which approach best keeps this content from consuming the main conversation's context?",
+      "type": "single_select",
+      "options": [
+        "A) Delegate each research subtask to a subagent that works in its own context window and returns only a concise summary to the parent.",
+        "B) Write the research output to an external memory file and reload the full file into context at the start of every subsequent turn.",
+        "C) Lower max_tokens on the agent's requests so shorter model responses slow the rate at which the conversation history grows.",
+        "D) Rely on server-side compaction to summarize the whole conversation once the accumulated research output approaches the context limit."
+      ],
+      "correct_answer": "A",
+      "explanation": "Subagents work in their own context windows and return only summaries, keeping the parent's context clean. This is a core benefit of the subagent pattern."
+    },
+    {
+      "number": 27,
+      "question": "A team adds an instruction to its project CLAUDE.md telling Claude Code never to read files matching .env, yet Claude still occasionally reads them during sessions. Which configuration change reliably prevents these reads?",
+      "type": "single_select",
+      "options": [
+        "A) Rewrite the instruction in stronger, more emphatic wording near the top of CLAUDE.md.",
+        "B) Add permissions deny rules for the .env file paths in the project's settings.json.",
+        "C) Move the instruction into an organization-wide managed CLAUDE.md so it cannot be excluded.",
+        "D) Duplicate the instruction in both the user-level and project CLAUDE.md so it loads twice."
+      ],
+      "correct_answer": "B",
+      "explanation": "Permissions deny rules in settings.json provide hard enforcement that cannot be overridden by model behavior, unlike CLAUDE.md instructions which are soft guidance."
+    },
+    {
+      "number": 28,
+      "question": "A developer enables JSON outputs by passing a schema in output_config.format and assumes every response is now guaranteed to match the schema. They propose removing all other response handling before downstream consumption. Which check must the application still perform?",
+      "type": "single_select",
+      "options": [
+        "A) Strip markdown code fences from the response, since JSON outputs are wrapped in fenced code blocks by default.",
+        "B) Re-parse the text with regular expressions, since constrained decoding still emits occasional malformed JSON.",
+        "C) Retry each request and compare the results, since schema conformance is probabilistic rather than guaranteed.",
+        "D) Inspect the stop_reason field, since a refusal returns HTTP 200 and a max_tokens stop can leave the output incomplete."
+      ],
+      "correct_answer": "D",
+      "explanation": "Even with structured outputs, the application must check stop_reason. A refusal or max_tokens truncation can produce a response that doesn't contain the expected JSON output."
+    },
+    {
+      "number": 29,
+      "question": "A developer is building a Claude Code plugin that bundles skills, agents, and hooks. They need to test each change quickly during development, without publishing the plugin or going through an install step every time. What is the recommended workflow?",
+      "type": "single_select",
+      "options": [
+        "A) Edit the installed plugin's files in place inside Claude Code's internal plugin cache directory.",
+        "B) Copy the plugin's skills, agents, and hooks into ~/.claude directories manually after each change.",
+        "C) Publish each change to a private plugin marketplace, then uninstall and reinstall the plugin before every test run.",
+        "D) Launch Claude Code with --plugin-dir pointing at the plugin directory and run /reload-plugins to pick up edits."
+      ],
+      "correct_answer": "D",
+      "explanation": "The --plugin-dir flag lets developers test plugins from a local directory, and /reload-plugins picks up changes without restarting."
+    },
+    {
+      "number": 30,
+      "question": "A team is building an agent in Python that must read files, run shell commands, and edit code. They do not want to implement the tool-execution loop themselves, and the agent must run inside their own process. Which approach fits?",
+      "type": "single_select",
+      "options": [
+        "A) Use Claude Managed Agents, since agents with file and command tools can only run in Anthropic-hosted infrastructure.",
+        "B) Use the Claude Agent SDK, which runs the agent loop and built-in tools inside their own process.",
+        "C) Implement a custom agent loop from scratch, because official agent tooling is not available as a Python library.",
+        "D) Call the Messages API with the Anthropic client SDK, which executes file and shell tools on Anthropic's servers automatically."
+      ],
+      "correct_answer": "B",
+      "explanation": "The Claude Agent SDK runs the agent loop and built-in tools (file, shell, code editing) inside the developer's own process, without needing to implement the loop manually."
+    },
+    {
+      "number": 31,
+      "question": "A team is choosing among custom tools, Skills, and MCP servers to extend a Claude application. Which TWO statements reflect the correct tradeoffs?",
+      "type": "multiple_select",
+      "options": [
+        "A) Use a Skill to give Claude live access to an internal REST API, since Skills execute scripts at runtime.",
+        "B) Use an MCP server when several Claude clients and applications must all consume one centrally maintained integration.",
+        "C) Use a Skill to package procedural knowledge such as templates and standards, since it loads on demand when relevant.",
+        "D) Use a custom tool for stable reference knowledge like brand guidelines, embedding the full guide in the schema description."
+      ],
+      "correct_answers": ["B", "C"],
+      "explanation": "MCP servers are ideal for shared integrations across multiple clients. Skills package procedural knowledge (templates, standards) that loads on demand. Skills don't execute scripts for API access, and embedding full guides in tool descriptions is not the right use of custom tools."
+    },
+    {
+      "number": 32,
+      "question": "A developer is building an MCP server that exposes tools for creating and updating support tickets. The server must also make a set of read-only reference documents, such as schemas and API docs, available for clients to attach into context. Which MCP primitive should carry the documents?",
+      "type": "single_select",
+      "options": [
+        "A) Embed the full content of each document inside the descriptions of the server's existing tools.",
+        "B) Register each document as an MCP prompt so its content is injected whenever the server is connected.",
+        "C) Define a separate tool for each document whose call returns the document's full text as the tool result.",
+        "D) Expose each document as an MCP resource identified by a URI so clients can list and read it on demand."
+      ],
+      "correct_answer": "D",
+      "explanation": "MCP resources are the correct primitive for read-only reference data that clients can list and read on demand. Tools are for actions, prompts are for reusable prompt templates, and embedding in descriptions wastes token budget."
+    },
+    {
+      "number": 33,
+      "question": "A team building a single Claude application needs responses grounded in current information from the public web. They want to avoid implementing tool execution logic or maintaining an external integration. Which approach best fits?",
+      "type": "single_select",
+      "options": [
+        "A) Define a custom search tool that wraps a third-party search API and execute each call inside the application.",
+        "B) Build an MCP server that proxies a public search engine and connect the application to it as a client.",
+        "C) Package a snapshot of relevant web knowledge into a Skill that Claude loads on demand when a query needs it.",
+        "D) Enable Anthropic's built-in web search server tool, which executes on Anthropic's infrastructure."
+      ],
+      "correct_answer": "D",
+      "explanation": "Anthropic's built-in web search is a server-side tool that requires no client-side tool execution logic or external integration maintenance."
+    },
+    {
+      "number": 34,
+      "question": "A team implements the client-side handler for Claude's memory tool. During review, they find the handler executes any file path Claude requests, including paths like /memories/../../secrets.env. What is the correct safeguard?",
+      "type": "single_select",
+      "options": [
+        "A) Scan each requested path for the literal substring \"../\" and block only requests that contain that exact pattern.",
+        "B) Add a system prompt instruction directing Claude to request only paths that begin with the /memories directory prefix.",
+        "C) Rely on Anthropic's server-side validation, since the memory tool executes its file operations on managed infrastructure.",
+        "D) Resolve each requested path to its canonical form and reject any that falls outside the memory directory before executing it."
+      ],
+      "correct_answer": "D",
+      "explanation": "Path canonicalization (resolving to absolute path) and then checking it falls within the allowed directory is the correct security practice. String matching for '../' can be bypassed, and prompt instructions are not a security boundary."
+    },
+    {
+      "number": 35,
+      "question": "Requirements for a Claude-powered document assistant have been approved. The team now selects a model tier, chooses between synchronous and batch processing, and specifies the prompt caching and error-handling architecture before any code is written. Which systems life cycle phase is this?",
+      "type": "single_select",
+      "options": [
+        "A) Classify this activity as the operations and maintenance phase.",
+        "B) Classify this activity as the system design phase.",
+        "C) Classify this activity as the requirements analysis phase.",
+        "D) Classify this activity as the implementation phase."
+      ],
+      "correct_answer": "B",
+      "explanation": "Selecting technologies, architectures, and processing approaches after requirements are approved is the system design phase."
+    },
+    {
+      "number": 36,
+      "question": "A team is designing a pipeline around the Message Batches API for a large offline classification workload. Which TWO design decisions correctly reflect the API's behavior?",
+      "type": "multiple_select",
+      "options": [
+        "A) Build the pipeline to consume results token by token as each batched request streams its output back.",
+        "B) Plan for reduced output quality because batch requests are routed to a smaller, lower-capability model.",
+        "C) Budget the job using discounted token pricing compared with equivalent synchronous Messages API calls.",
+        "D) Design the pipeline to retrieve results asynchronously, planning around the 24-hour completion window."
+      ],
+      "correct_answers": ["C", "D"],
+      "explanation": "The Message Batches API offers discounted pricing (50% off) and results are retrieved asynchronously within a 24-hour window. Batch requests use the same models and don't support streaming."
+    },
+    {
+      "number": 37,
+      "question": "An agent application delegates code exploration and security review to separate subagents. Which TWO outcomes does this pattern let the developer achieve?",
+      "type": "multiple_select",
+      "options": [
+        "A) Share the parent's context window across all subagents so each one automatically sees the others' tool results.",
+        "B) Keep intermediate tool calls and results inside each subagent's own context, returning only a summary to the parent.",
+        "C) Rely on each subagent's fixed system prompt to make its output deterministic across repeated runs.",
+        "D) Run independent subtasks concurrently so the overall work finishes in the time of the slowest task."
+      ],
+      "correct_answers": ["B", "D"],
+      "explanation": "Subagents keep their intermediate work in their own context (returning only summaries) and can run concurrently for parallelism. They don't share context windows and system prompts don't make outputs deterministic."
+    },
+    {
+      "number": 38,
+      "question": "A team's agentic code-refactoring tool runs on Sonnet. Evals show reasoning quality falls short on complex multi-file changes; the workload is latency-tolerant and budget allows a higher unit cost. What is the most appropriate next step?",
+      "type": "single_select",
+      "options": [
+        "A) Enable fast mode on the Sonnet requests, which serves a more capable variant of the model for demanding agentic workloads.",
+        "B) Downgrade to Haiku and run each task three times, using a majority vote across runs to recover the lost reasoning quality.",
+        "C) Keep the workload on Sonnet and raise max_tokens substantially, since a larger output budget lets the model reason more deeply.",
+        "D) Move the workload to the Opus tier and verify the quality improvement against the same eval suite before cutting over."
+      ],
+      "correct_answer": "D",
+      "explanation": "When reasoning quality is insufficient, the workload is latency-tolerant, and budget allows it, upgrading to Opus (the most capable tier) and validating with evals is the appropriate step."
+    },
+    {
+      "number": 39,
+      "question": "A developer new to building on LLMs is reviewing how Claude represents and generates text. Which TWO statements are accurate?",
+      "type": "multiple_select",
+      "options": [
+        "A) Each token maps to exactly one whole word, so a message's token count always equals its word count.",
+        "B) Token counts for identical text are the same across every Claude model generation, so counts measured on one model transfer directly to another.",
+        "C) A token is roughly 4 characters or 0.75 words of English text, and the exact count varies by language and content type.",
+        "D) Claude produces output one token at a time, sampling each next token based on the tokens that came before it."
+      ],
+      "correct_answers": ["C", "D"],
+      "explanation": "Tokens are roughly 4 characters/0.75 words and vary by language. Claude generates text autoregressively, one token at a time. Tokens don't map 1:1 to words, and different models may use different tokenizers."
+    },
+    {
+      "number": 40,
+      "question": "A project's CLAUDE.md instructs Claude never to edit files under config/production/, yet reviews show Claude still occasionally modifies them. The team needs edits to that directory blocked every time, without exception. What should they configure?",
+      "type": "single_select",
+      "options": [
+        "A) Add a permissions.deny rule in the project's settings.json that blocks edits to that path.",
+        "B) Rely on auto memory to record the correction so Claude stops editing those files over time.",
+        "C) Move the instruction to the top of CLAUDE.md and reword it in stronger, more emphatic language.",
+        "D) Duplicate the instruction in every engineer's user-level CLAUDE.md in addition to the project file."
+      ],
+      "correct_answer": "A",
+      "explanation": "Permissions deny rules in settings.json provide hard enforcement. CLAUDE.md instructions are soft guidance that the model can occasionally ignore."
+    },
+    {
+      "number": 41,
+      "question": "An application runs a Claude model with adaptive thinking enabled at high effort. On complex requests, responses are truncated with stop_reason \"max_tokens\", even though the total input is well under the context window. Which adjustment resolves the truncation?",
+      "type": "single_select",
+      "options": [
+        "A) Enable fast mode with the speed parameter so output generation finishes before the cap is reached and responses can run longer.",
+        "B) Raise max_tokens or lower the effort level, since thinking tokens count toward the max_tokens cap and can crowd out the response text.",
+        "C) Retry the identical request, since thinking tokens are billed as output but excluded from max_tokens and the truncation is a transient server-side limit.",
+        "D) Trim older conversation turns before each request, since the accumulated history has pushed the input past the context window limit."
+      ],
+      "correct_answer": "B",
+      "explanation": "Thinking tokens count toward the max_tokens budget. If thinking uses too many tokens, the visible response gets truncated. Raising max_tokens or lowering effort resolves this."
+    },
+    {
+      "number": 42,
+      "question": "Planning documents for a Claude-powered invoice-processing service contain the following statements. Which TWO are functional requirements?",
+      "type": "multiple_select",
+      "options": [
+        "A) The service must respond within five seconds at the 95th percentile.",
+        "B) The service shall route any invoice above a configured amount to human review.",
+        "C) The service shall extract line items and totals from each uploaded invoice.",
+        "D) The company intends to cut invoice-handling costs by 30% within a year."
+      ],
+      "correct_answers": ["B", "C"],
+      "explanation": "Functional requirements describe what the system does. Routing invoices to human review and extracting line items are functional. Response time is a non-functional (performance) requirement, and cost reduction is a business objective."
+    },
+    {
+      "number": 43,
+      "question": "A developer is adding a multi-turn chat feature using the Messages API. Each request sends only the user's newest message, and Claude answers every turn with no awareness of what was said earlier. What should the developer change?",
+      "type": "single_select",
+      "options": [
+        "A) Include all prior user and assistant messages in the messages array of each request.",
+        "B) Raise max_tokens on each request so the model has enough capacity to retain earlier conversation turns.",
+        "C) Send only the previous assistant response with each new user message, since the model can infer the earlier turns from it.",
+        "D) Enable prompt caching so the API automatically persists the conversation state between successive calls."
+      ],
+      "correct_answer": "A",
+      "explanation": "The Messages API is stateless. The full conversation history must be sent with each request in the messages array for multi-turn conversations."
+    },
+    {
+      "number": 44,
+      "question": "A developer is adding multi-turn chat to an application built directly on the Messages API. Which TWO practices correctly handle conversation state?",
+      "type": "multiple_select",
+      "options": [
+        "A) Append each earlier model reply to the messages array as a turn with the assistant role.",
+        "B) Resend the full prior conversation history with each request, because the API does not store state between calls.",
+        "C) Reference the conversation history by a server-side conversation ID instead of resending it on each request.",
+        "D) Rely on max_tokens to cap the combined size of the conversation history plus the new response."
+      ],
+      "correct_answers": ["A", "B"],
+      "explanation": "The Messages API is stateless, so the full conversation history must be resent. Assistant replies are included with the assistant role. There's no server-side conversation ID, and max_tokens only caps output."
+    },
+    {
+      "number": 45,
+      "question": "A voice application's prompt contains the bare instruction \"NEVER use ellipses,\" yet Claude's responses still occasionally include them. According to Anthropic's prompting guidance, which change makes this instruction more effective?",
+      "type": "single_select",
+      "options": [
+        "A) Prefill the beginning of the assistant message with correctly punctuated text so the response continues in that style.",
+        "B) Repeat the prohibition several times throughout the prompt in capital letters so the model treats it as critical.",
+        "C) Explain the reason for the rule: the output is read aloud by a text-to-speech engine that cannot pronounce ellipses.",
+        "D) Set the temperature to zero so the model deterministically complies with negative instructions in every response."
+      ],
+      "correct_answer": "C",
+      "explanation": "Anthropic's prompting guidance recommends explaining the reason behind instructions. When Claude understands why a rule exists, it follows it more reliably."
+    },
+    {
+      "number": 46,
+      "question": "A developer is tuning token spend on a Claude model that supports the effort parameter. Which TWO approaches are grounded in an accurate understanding of how effort behaves?",
+      "type": "multiple_select",
+      "options": [
+        "A) Set effort to low to guarantee that responses contain no thinking blocks, since effort enforces a hard cap on thinking tokens.",
+        "B) Pass adaptive as the effort value to enable adaptive thinking, since adaptive is the model's highest effort level.",
+        "C) Treat effort as soft guidance and rely on max_tokens for a hard output limit, since Claude may still think at low effort.",
+        "D) Lower the effort level to reduce total token spend across tool calls, text, and thinking, not just reasoning depth."
+      ],
+      "correct_answers": ["C", "D"],
+      "explanation": "Effort is soft guidance (not a hard cap), and max_tokens provides the hard limit. Lower effort reduces overall token spend. Effort doesn't guarantee zero thinking, and 'adaptive' is not an effort level."
+    },
+    {
+      "number": 47,
+      "question": "A team moves a document-triage workload from Claude Sonnet 4.6 to Claude Haiku 4.5 to cut costs, keeping thinking: {type: \"adaptive\"} in every request. All requests to the new model now fail with a 400 error. What should the team do?",
+      "type": "single_select",
+      "options": [
+        "A) Add an explicit effort value to output_config, since adaptive thinking fails validation without one.",
+        "B) Remove the thinking parameter entirely, because thinking of any kind is unavailable on the Haiku tier.",
+        "C) Switch the thinking configuration to type: \"enabled\" with a budget_tokens value, which Haiku 4.5 accepts.",
+        "D) Add the interleaved-thinking-2025-05-14 beta header, which adaptive thinking requires on smaller models."
+      ],
+      "correct_answer": "C",
+      "explanation": "Claude Haiku 4.5 does not support adaptive thinking (type: \"adaptive\"). It supports extended thinking with type: \"enabled\" and an explicit budget_tokens value."
+    },
+    {
+      "number": 48,
+      "question": "An application must extract structured fields from every user message by calling an extract_fields tool before any other processing. With default settings, Claude sometimes replies in plain text without calling it. Which change guarantees the tool is called?",
+      "type": "single_select",
+      "options": [
+        "A) Provide input_examples in the tool definition so Claude triggers extract_fields far more consistently.",
+        "B) Set tool_choice to {\"type\": \"tool\", \"name\": \"extract_fields\"} so the API requires that specific tool call.",
+        "C) Set strict: true on the tool definition so the API enforces that Claude invokes the tool every turn.",
+        "D) Add a firm system prompt instruction directing Claude to always call extract_fields before it responds."
+      ],
+      "correct_answer": "B",
+      "explanation": "tool_choice with type 'tool' and the specific tool name forces Claude to call that exact tool. strict: true controls schema conformance, not whether the tool is called."
+    },
+    {
+      "number": 49,
+      "question": "A developer reviews a teammate's Messages API integration and finds downstream code that assumes every response contains exactly the number of tokens set in max_tokens, and it fails when responses come back shorter. Which understanding of max_tokens is correct?",
+      "type": "single_select",
+      "options": [
+        "A) Treat responses shorter than max_tokens as truncation errors that should be retried automatically.",
+        "B) Treat max_tokens as an upper bound on generation; Claude may stop naturally before reaching it.",
+        "C) Treat max_tokens as a target length that the model pads its output to reach on every request.",
+        "D) Treat max_tokens as a combined budget for input and output, so long prompts shorten responses."
+      ],
+      "correct_answer": "B",
+      "explanation": "max_tokens is an upper bound. Claude can and does stop naturally (end_turn) before reaching it when the response is complete."
+    },
+    {
+      "number": 50,
+      "question": "A developer replaces an official Anthropic client SDK with hand-rolled HTTP calls to the Messages API endpoint. Requests that succeeded through the SDK now fail with a 400 error citing a missing required header. What was the SDK most likely handling automatically?",
+      "type": "single_select",
+      "options": [
+        "A) Attaching an anthropic-workspace-id header, which the API requires on every Messages request.",
+        "B) Sending the required anthropic-version header along with the JSON content-type on each request.",
+        "C) Opening a persistent websocket connection before issuing any Messages API requests.",
+        "D) Retrying each rejected request with exponential backoff until the server eventually accepted it."
+      ],
+      "correct_answer": "B",
+      "explanation": "The anthropic-version header is required on every API request. The SDK handles this automatically along with content-type. The workspace ID is not required on every request."
+    },
+    {
+      "number": 51,
+      "question": "A platform team runs several automated server-side workloads that call the Claude API, all sharing one long-lived static API key stored in their deployment configuration. A security review flags the long-lived shared credential as a risk. Which change most directly reduces this risk?",
+      "type": "single_select",
+      "options": [
+        "A) Commit the key to a private repository so access is governed by repository permissions.",
+        "B) Move the workloads to Workload Identity Federation so each obtains short-lived bearer tokens at runtime.",
+        "C) Base64-encode the static key in each workload's configuration so it is not stored in plain text.",
+        "D) Create a single key with no expiration and distribute it to every workload through environment variables."
+      ],
+      "correct_answer": "B",
+      "explanation": "Workload Identity Federation provides short-lived tokens at runtime, eliminating the need for long-lived static credentials. This directly addresses the security concern."
+    },
+    {
+      "number": 52,
+      "question": "A developer is building a direct HTTP integration with the Messages API using streaming, without a client SDK. How should the application obtain the complete text of Claude's response?",
+      "type": "single_select",
+      "options": [
+        "A) Collect the message_delta events, which stream the response text as top-level message updates.",
+        "B) Wait for the message_stop event, which carries the full assembled response text in its payload.",
+        "C) Parse the final HTTP response body after the connection closes, since the API buffers the full message.",
+        "D) Accumulate the text fragments delivered in content_block_delta events as the stream progresses."
+      ],
+      "correct_answer": "D",
+      "explanation": "In streaming, the response text arrives as text_delta fragments within content_block_delta events. The client must accumulate these to build the complete response."
+    },
+    {
+      "number": 53,
+      "question": "A team maintains a Claude-powered application across development, staging, and production environments. Which TWO practices reflect sound configuration management?",
+      "type": "multiple_select",
+      "options": [
+        "A) Check the project CLAUDE.md into version control so contributors share the same instructions.",
+        "B) Pin each environment to a specific model ID and upgrade only after validation.",
+        "C) Target the latest model alias in production so model improvements arrive automatically without redeploying.",
+        "D) Store the API key in a committed settings file so every environment reproduces identically."
+      ],
+      "correct_answers": ["A", "B"],
+      "explanation": "Version-controlling CLAUDE.md ensures consistency across contributors. Pinning model IDs prevents unexpected behavior from automatic model updates. Committing API keys is a security risk, and using latest aliases in production risks breaking changes."
+    }
+  ]
+}

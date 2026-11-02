@@ -2,6 +2,8 @@
   "use strict";
 
   const { modules, exam } = window.CCDV;
+  const EXAMS = window.CCDV_EXAMS || [];
+  const examById = (id) => EXAMS.find((e) => String(e.id) === String(id));
   const STORE_KEY = "ccdv-prep-v1";
   const PASS_PCT = 72; // module quiz "passed" threshold, mirrors 720/1000
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -11,7 +13,7 @@
 
   /* ---------------- state ---------------- */
 
-  const blank = () => ({ plan: null, checks: {}, quiz: {}, mock: [], manual: {} });
+  const blank = () => ({ plan: null, checks: {}, quiz: {}, mock: [], manual: {}, exams: {} });
   let S = load();
 
   function load() {
@@ -94,6 +96,7 @@
       case "step": return stepDone(u.step);
       case "quiz": return quizPassed(u.module.id);
       case "mock": return S.mock.length > 0;
+      case "exam": return (S.exams[u.exam.id] || []).length > 0;
       default: return !!S.manual[u.key];
     }
   }
@@ -110,12 +113,20 @@
   // Prep days run from plan.start up to (not including) plan.exam.
   const prepDays = (plan) => Math.max(3, diffDays(plan.exam, plan.start));
 
+  // Split N prep days into study days, an optional review day, and a tail of
+  // practice-exam days (about a third of the plan, at most one per exam).
+  function layout(N) {
+    const examDays = EXAMS.length ? Math.min(EXAMS.length, Math.max(1, Math.floor(N / 3))) : 1;
+    const hasReview = N - examDays >= 7;
+    const studyDays = Math.max(1, N - examDays - (hasReview ? 1 : 0));
+    return { examDays, hasReview, studyDays };
+  }
+
   function buildSchedule(plan) {
     const N = prepDays(plan);
     const exclude = new Set(plan.exclude || []);
     const units = allUnits().filter((u) => !exclude.has(u.key));
-    const hasReview = N >= 8;
-    const studyDays = Math.max(1, N - 1 - (hasReview ? 1 : 0));
+    const { examDays, hasReview, studyDays } = layout(N);
     const days = Array.from({ length: N }, (_, i) => ({ index: i, date: addDays(plan.start, i), tasks: [], kind: "study" }));
 
     // Spread units in order, balancing minutes: each unit lands on the day its
@@ -141,7 +152,7 @@
     }
 
     if (hasReview) {
-      const d = days[N - 2];
+      const d = days[studyDays];
       d.kind = "review";
       d.tasks.push(
         { key: "r:weak", type: "manual", minutes: 60, title: "Review weak areas: retake any module quiz below 80%" },
@@ -149,10 +160,23 @@
       );
     }
 
-    const last = days[N - 1];
-    last.kind = "mock";
-    last.tasks.push(
-      { key: "mock", type: "mock", minutes: exam.minutes, title: `Full mock exam (${exam.questions} questions, ${exam.minutes} min)` },
+    const tail = days.slice(N - examDays);
+    tail.forEach((d) => (d.kind = "exam"));
+    if (EXAMS.length) {
+      // At most two full exams per day; any extra exams stay available from the sidebar.
+      EXAMS.slice(0, examDays * 2).forEach((e, i) =>
+        tail[i % examDays].tasks.push({
+          key: `x:${e.id}`,
+          type: "exam",
+          exam: e,
+          minutes: exam.minutes,
+          title: `${e.title} (${e.questions.length} questions, timed) + review your mistakes`,
+        })
+      );
+    } else {
+      tail[0].tasks.push({ key: "mock", type: "mock", minutes: exam.minutes, title: `Full mock exam (${exam.questions} questions, ${exam.minutes} min)` });
+    }
+    days[N - 1].tasks.push(
       { key: "r:logistics", type: "manual", minutes: 15, title: "Exam logistics: ID ready, Pearson VUE check-in tested, quiet room booked" }
     );
 
@@ -170,18 +194,32 @@
   /* ---------------- routing ---------------- */
 
   let timer = null;
+  let leaveGuard = null; // returns true while an attempt has unsaved answers
+  let currentHash = location.hash;
   window.addEventListener("hashchange", route);
+  window.addEventListener("beforeunload", (e) => {
+    if (leaveGuard && leaveGuard()) e.preventDefault();
+  });
 
   function route() {
+    if (leaveGuard && leaveGuard() && location.hash !== currentHash) {
+      if (!confirm("Leave this attempt? Your answers will be lost.")) {
+        history.replaceState(null, "", currentHash || "#/");
+        return;
+      }
+    }
+    leaveGuard = null;
+    currentHash = location.hash;
     clearInterval(timer);
     const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     const [view, a, b] = parts;
-    if (!S.plan && !["setup", "module", "quiz", "mock"].includes(view)) {
+    if (!S.plan && !["setup", "module", "quiz", "mock", "exam"].includes(view)) {
       renderSetup();
     } else if (view === "setup") renderSetup();
     else if (view === "module" && moduleById(a)) renderModule(moduleById(a), b);
     else if (view === "quiz" && moduleById(a)) renderQuiz(moduleById(a));
     else if (view === "mock") renderMock();
+    else if (view === "exam" && examById(a)) renderExam(examById(a));
     else renderDashboard();
     renderNav(view, a);
     window.scrollTo(0, 0);
@@ -213,9 +251,23 @@
         })
         .join("")}
       <div class="nav-head">Final</div>
-      ${link("#/mock", "Mock exam", view === "mock", S.mock.length ? `<span class="nav-pct full">${S.mock.at(-1).scaled}</span>` : "")}
+      ${EXAMS.map((e) => {
+        const best = bestExam(e.id);
+        return link(
+          `#/exam/${e.id}`,
+          `<span class="nav-num">E${e.id}</span><span class="nav-title">${esc(e.title)}</span>`,
+          view === "exam" && String(id) === String(e.id),
+          best !== null ? `<span class="nav-pct${best >= exam.passScaled ? " full" : ""}">${best}</span>` : ""
+        );
+      }).join("")}
+      ${link("#/mock", `<span class="nav-num">M</span><span class="nav-title">Domain mock (from quizzes)</span>`, view === "mock", S.mock.length ? `<span class="nav-pct full">${S.mock.at(-1).scaled}</span>` : "")}
     `;
   }
+
+  const bestExam = (id) => {
+    const r = S.exams[id] || [];
+    return r.length ? Math.max(...r.map((x) => x.scaled)) : null;
+  };
 
   /* ---------------- setup ---------------- */
 
@@ -233,7 +285,7 @@
         <p class="lead">Pick how long you have. The planner spreads ${modules.length} modules,
         ${modules.reduce((a, m) => a + m.steps.length, 0)} lessons and
         ${modules.reduce((a, m) => a + m.quiz.length, 0)} practice questions across your days,
-        then saves a review day and a full mock exam for the end.</p>
+        then saves a review day and ${EXAMS.length ? `${EXAMS.length} full-length practice exams` : "a full mock exam"} for the end.</p>
       </section>
 
       <form id="setup" class="card setup">
@@ -309,7 +361,7 @@
         preview.innerHTML = `<p class="warn">Choose an exam date at least 3 days after your start date.</p>`;
         return false;
       }
-      const studyDays = Math.max(1, n - 1 - (n >= 8 ? 1 : 0));
+      const { studyDays } = layout(n);
       const perDay = Math.round(totalMin / studyDays);
       const intensity = perDay > 180 ? "Intensive" : perDay > 90 ? "Steady" : "Relaxed";
       preview.innerHTML = `
@@ -346,6 +398,7 @@
     if (u.type === "step") return `#/module/${u.module.id}/${u.step.id}`;
     if (u.type === "quiz") return `#/quiz/${u.module.id}`;
     if (u.type === "mock") return "#/mock";
+    if (u.type === "exam") return `#/exam/${u.exam.id}`;
     return null;
   }
 
@@ -355,6 +408,7 @@
     const tag =
       u.type === "quiz" ? `<span class="tag quiz">Quiz</span>` :
       u.type === "mock" ? `<span class="tag mock">Mock</span>` :
+      u.type === "exam" ? `<span class="tag mock">Exam</span>` :
       u.type === "step" ? `<span class="tag">${esc(u.module.short)}</span>` :
       `<span class="tag review">Review</span>`;
     const control =
@@ -362,7 +416,8 @@
         ? `<input type="checkbox" class="manual" data-key="${u.key}" ${done ? "checked" : ""} aria-label="Mark done">`
         : `<span class="dot${done ? " done" : ""}" aria-label="${done ? "Done" : "Not done"}"></span>`;
     const extra =
-      u.type === "quiz" && bestQuiz(u.module.id) !== null ? ` · best ${bestQuiz(u.module.id)}%` : "";
+      u.type === "quiz" && bestQuiz(u.module.id) !== null ? ` · best ${bestQuiz(u.module.id)}%` :
+      u.type === "exam" && bestExam(u.exam.id) !== null ? ` · best ${bestExam(u.exam.id)}/1000` : "";
     const label = href ? `<a href="${href}">${esc(u.title)}</a>` : `<span>${esc(u.title)}</span>`;
     return `<li class="task${done ? " done" : ""}">${control}<div class="task-main">${label}
       <div class="task-meta">${tag}<span>${fmtMin(u.minutes)}${extra}</span></div></div></li>`;
@@ -431,7 +486,7 @@
               const past = d.index < st.todayIdx;
               const mins = d.tasks.reduce((a, u) => a + u.minutes, 0);
               const state = done ? "done" : past ? "late" : isToday ? "today" : "";
-              const label = { review: "Review day", mock: "Mock exam day", practice: "Practice day", study: "Study" }[d.kind];
+              const label = { review: "Review day", exam: "Practice exam day", practice: "Practice day", study: "Study" }[d.kind];
               return `<li class="day ${state}">
                 <details ${isToday || (st.todayIdx < 0 && d.index === 0) ? "open" : ""}>
                   <summary>
@@ -555,14 +610,15 @@
 
   /* ---------------- quiz engine ---------------- */
 
-  function prepQuestions(list) {
-    return shuffle(list).map((item) => {
-      const opts = shuffle(item.q.options.map((text, i) => ({ text, correct: item.q.answer.includes(i) })));
+  function prepQuestions(list, { fixed = false } = {}) {
+    return (fixed ? list : shuffle(list)).map((item) => {
+      const raw = item.q.options.map((text, i) => ({ text, correct: item.q.answer.includes(i) }));
+      const opts = fixed ? raw : shuffle(raw);
       return { ...item, opts, need: item.q.answer.length };
     });
   }
 
-  function renderQuizBody(qs, { title, subtitle, onSubmit, timed }) {
+  function renderQuizBody(qs, { title, subtitle, onSubmit, timed, letters }) {
     app.innerHTML = `
       <section class="mod-head">
         <p class="eyebrow">${esc(subtitle)}</p>
@@ -581,7 +637,7 @@
                 (o, j) => `
               <label class="option">
                 <input type="${item.need > 1 ? "checkbox" : "radio"}" name="q${i}" value="${j}">
-                <span>${esc(o.text)}</span>
+                <span>${letters ? `<b class="opt-letter">${String.fromCharCode(65 + j)}.</b> ` : ""}${esc(o.text)}</span>
               </label>`
               )
               .join("")}
@@ -609,6 +665,7 @@
     });
 
     let submitted = false;
+    leaveGuard = () => !submitted && answered() > 0;
     const grade = () => {
       if (submitted) return;
       const unanswered = qs.length - answered();
@@ -620,9 +677,11 @@
         const chosen = $$(`input[name="q${i}"]:checked`, form).map((x) => Number(x.value));
         const ok = item.opts.every((o, j) => o.correct === chosen.includes(j));
         if (ok) correct++;
-        const pm = (perModule[item.module.id] ||= { title: item.module.title, c: 0, t: 0 });
-        pm.t++;
-        if (ok) pm.c++;
+        if (item.module) {
+          const pm = (perModule[item.module.id] ||= { title: item.module.title, c: 0, t: 0 });
+          pm.t++;
+          if (ok) pm.c++;
+        }
         const fs = $(`#q${i}`);
         fs.classList.add(ok ? "right" : "wrong");
         $$("label.option", fs).forEach((lab, j) => {
@@ -804,6 +863,89 @@
               <a class="btn ghost" href="#/mock">Mock exam home</a>
             </div>
           </section>`);
+      },
+    });
+  }
+
+  /* ---------------- practice exams ---------------- */
+
+  function renderExam(e) {
+    const history = S.exams[e.id] || [];
+    const multi = e.questions.filter((q) => q.answer.length > 1).length;
+    app.innerHTML = `
+      <section class="mod-head">
+        <p class="eyebrow">Full-length practice exam</p>
+        <h1>${esc(e.title)}</h1>
+        <p class="lead">${e.questions.length} questions across all domains, in a fixed order like a real exam form.
+        Take it in exam mode for a timed rehearsal, or in practice mode with no clock.</p>
+      </section>
+      <section class="card">
+        <ul class="facts">
+          <li><strong>${e.questions.length}</strong> questions</li>
+          <li><strong>${multi}</strong> multiple-response</li>
+          <li><strong>${exam.minutes}</strong> minutes (exam mode)</li>
+          <li><strong>${exam.passScaled}</strong> to pass (estimated)</li>
+        </ul>
+        <p class="muted small">Answers and explanations appear after you submit. The score is your percentage correct scaled to 1000,
+        which only approximates the real exam's scaled score. Leaving the page mid-attempt discards your answers.</p>
+        <div class="actions">
+          <button class="btn primary" id="start-timed">Start exam mode (${exam.minutes} min)</button>
+          <button class="btn ghost" id="start-practice">Practice mode (untimed)</button>
+        </div>
+      </section>
+      ${
+        history.length
+          ? `<section class="card"><h2>Previous attempts</h2>
+              <table class="tbl"><thead><tr><th>Date</th><th>Mode</th><th>Score</th><th>Correct</th><th>Result</th></tr></thead><tbody>
+              ${history
+                .slice()
+                .reverse()
+                .map(
+                  (h) => `<tr><td>${fmtDate(h.date)}</td><td>${h.timed ? "Exam" : "Practice"}</td><td>${h.scaled}</td><td>${h.correct}/${h.total}</td>
+                  <td>${h.scaled >= exam.passScaled ? `<span class="tag ok">Pass</span>` : `<span class="tag bad">Below pass</span>`}</td></tr>`
+                )
+                .join("")}
+              </tbody></table></section>`
+          : ""
+      }
+    `;
+    $("#start-timed").addEventListener("click", () => startExam(e, true));
+    $("#start-practice").addEventListener("click", () => startExam(e, false));
+  }
+
+  function startExam(e, timed) {
+    const qs = prepQuestions(e.questions.map((q) => ({ q })), { fixed: true });
+    const idx = EXAMS.indexOf(e);
+    const next = EXAMS[idx + 1];
+    renderQuizBody(qs, {
+      title: e.title,
+      subtitle: `${timed ? "Exam mode" : "Practice mode"} · ${qs.length} questions`,
+      timed: timed ? exam.minutes : 0,
+      letters: true,
+      onSubmit: ({ correct, total, pct, unanswered }) => {
+        const scaled = Math.round(pct * 10);
+        (S.exams[e.id] ||= []).push({ date: todayISO(), correct, total, scaled, timed });
+        save();
+        renderNav("exam", e.id);
+        const pass = scaled >= exam.passScaled;
+        showResult(`
+          <section class="card result ${pass ? "pass" : "fail"}">
+            <h2>Estimated score: ${scaled} / 1000</h2>
+            <p>${correct}/${total} correct${unanswered ? ` · ${unanswered} unanswered` : ""} ·
+            ${pass ? "Above the pass mark." : `Below the ${exam.passScaled} pass mark. Read every explanation for the questions you missed.`}</p>
+            <div class="actions">
+              <button class="btn primary" id="only-wrong">Show only missed questions</button>
+              <a class="btn ghost" href="#/exam/${e.id}">Exam home</a>
+              ${next ? `<a class="btn ghost" href="#/exam/${next.id}">${esc(next.title)} →</a>` : ""}
+              <a class="btn ghost" href="#/">Dashboard</a>
+            </div>
+          </section>`);
+        const btn = $("#only-wrong");
+        btn.addEventListener("click", () => {
+          const on = $("#quiz").classList.toggle("only-wrong");
+          btn.textContent = on ? "Show all questions" : "Show only missed questions";
+          $("#quiz").scrollIntoView({ block: "start" });
+        });
       },
     });
   }
