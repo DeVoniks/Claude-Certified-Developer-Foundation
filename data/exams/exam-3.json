@@ -402,8 +402,8 @@
         "C": "Keep each tool description to one short sentence so the definitions add as few input tokens as possible.",
         "D": "Group related operations such as create, review, and merge into one tool with an action parameter."
       },
-      "correct_answers": ["A", "B"],
-      "explanation": "Prefixing tool names with the service name keeps selection unambiguous across services, and input_examples help Claude format calls correctly. Descriptions should be detailed enough to be useful, and grouping unrelated operations reduces clarity."
+      "correct_answers": ["B", "D"],
+      "explanation": "Prefixing tool names with the owning service keeps selection unambiguous, and consolidating related operations into one tool with an action parameter reduces selection ambiguity (both are in Anthropic's tool definition guidance). input_examples are not supported on server tools such as web search, and one-sentence descriptions are too brief; aim for 3-4 sentences."
     },
     {
       "number": 32,

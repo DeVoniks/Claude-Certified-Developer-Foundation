@@ -103,8 +103,8 @@
         "C": "Drop the effort parameter and bound reasoning with max_tokens alone, since effort is not supported on the newer models.",
         "D": "Keep manual extended thinking with budget_tokens unchanged, since that configuration remains accepted on every current model."
       },
-      "correct_answers": ["B", "D"],
-      "explanation": "Claude 4.7+ uses a newer tokenizer producing ~30% more tokens for the same text, so prompts must be recounted. Manual extended thinking with budget_tokens continues to work across models. Temperature/top_p/top_k are still supported, and effort parameter is valid on newer models."
+      "correct_answers": ["A", "B"],
+      "explanation": "Claude 4.7+ models reject non-default temperature, top_p and top_k on thinking models, and use a newer tokenizer that produces up to ~35% more tokens for the same text, so prompts must be recounted. Manual extended thinking (budget_tokens) is rejected with a 400 on Claude 4.7 and later, and effort is supported."
     },
     {
       "number": 9,

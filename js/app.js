@@ -164,8 +164,15 @@
     tail.forEach((d) => (d.kind = "exam"));
     if (EXAMS.length) {
       // At most two full exams per day; any extra exams stay available from the sidebar.
-      EXAMS.slice(0, examDays * 2).forEach((e, i) =>
-        tail[i % examDays].tasks.push({
+      // Assign exams in order; the earlier exam days take the extra one so the
+      // final day before the real exam stays lighter.
+      const scheduled = EXAMS.slice(0, examDays * 2);
+      const base = Math.floor(scheduled.length / examDays);
+      const extra = scheduled.length % examDays;
+      const dayOf = [];
+      for (let d = 0; d < examDays; d++) for (let k = 0; k < base + (d < extra ? 1 : 0); k++) dayOf.push(d);
+      scheduled.forEach((e, i) =>
+        tail[dayOf[i]].tasks.push({
           key: `x:${e.id}`,
           type: "exam",
           exam: e,

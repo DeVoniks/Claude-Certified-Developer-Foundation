@@ -220,6 +220,8 @@ print(msg.content[0].text, msg.stop_reason, msg.usage)</code></pre>`,
 <li><strong>Files API</strong>: upload once and reference the file by <code>file_id</code> across many requests.</li>
 <li><strong>Citations</strong>: set <code>citations: {enabled: true}</code> on document blocks to get grounded answers with exact cited spans.</li>
 <li><strong>Message Batches API</strong>: asynchronous, <strong>50% cheaper</strong>, most batches finish well within 24 h. Results can come back in any order, so match them by <code>custom_id</code>.</li>
+<li><strong>Batch lifecycle</strong>: the create call returns immediately with <code>processing_status: "in_progress"</code> and no outputs. Poll the batch until <code>processing_status</code> is <code>"ended"</code>, then read results from <code>results_url</code> (stream them; the file can be large). Each result is <code>succeeded</code>, <code>errored</code>, <code>canceled</code> or <code>expired</code>, and only <code>succeeded</code> is billed. Requests not processed within 24 h expire. Results stay downloadable for 29 days.</li>
+<li><strong>Batch limits</strong>: up to 100,000 requests or 256 MB per batch. Batched requests can't use <code>stream: true</code> or fast mode. Vision, tools, system prompts, multi-turn and thinking all work. Request params are validated asynchronously, so test the shape with a normal Messages call first. Shared prefixes benefit from the 1-hour cache TTL, because batches often take longer than 5 minutes.</li>
 <li><strong>Token counting</strong>: <code>POST /v1/messages/count_tokens</code> lets you estimate cost and fit before sending.</li>
 <li><strong>Models API</strong>: <code>GET /v1/models</code> shows which models are available and what they can do.</li>
 </ul>
@@ -316,7 +318,14 @@ print(msg.content[0].text, msg.stop_reason, msg.usage)</code></pre>`,
 <li>System prompt instructions are <em>not</em> a tenancy boundary.</li>
 </ul>
 <h4>Rate limits vs spend limits</h4>
-<p>A short-lived 429 with a <code>retry-after</code> header is a rate limit, so back off. A 429 that persists for hours even after you slow down points to a <strong>spend limit</strong> having been reached. Check the error details and Console limits rather than retrying.</p>`,
+<p>A short-lived 429 with a <code>retry-after</code> header is a rate limit, so back off. A 429 that persists for hours even after you slow down points to a <strong>spend limit</strong> having been reached. Check the error details and Console limits rather than retrying.</p>
+<ul>
+<li><strong>Tier spend cap reached</strong>: HTTP 429 with type <code>rate_limit_error</code> (the same type as a rate limit), but <strong>no <code>retry-after</code> header</strong>, and <code>error.details.error_code</code> is <code>enforced_spend_limit_reached</code>. Retries (including the SDK's) keep failing until next month or a tier increase.</li>
+<li><strong>A spend limit you set yourself</strong> (org or workspace) returns HTTP <strong>400</strong> <code>invalid_request_error</code> ("You have reached your specified API usage limits"). Raise or remove the limit.</li>
+<li>Limits use a token bucket that refills continuously, so a 60 RPM limit can act like 1 request per second. Sharp traffic jumps can also trip <strong>acceleration limits</strong>, so ramp up gradually.</li>
+<li><code>max_tokens</code> doesn't count toward OTPM; only tokens actually generated do. <code>cache_read_input_tokens</code> doesn't count toward ITPM on most models.</li>
+<li>Workspaces can have their own lower rate and spend limits, which protects other workspaces. The default workspace can't have a spend limit.</li>
+</ul>`,
           checklist: [
             "I know WIF and service accounts replace static keys for automated jobs",
             "I know App Attest is the option for native iOS/macOS clients",
@@ -615,6 +624,24 @@ print(msg.content[0].text, msg.stop_reason, msg.usage)</code></pre>`,
           answer: [1],
           explain: "Keep every block (text, tool_use, thinking). Dropping tool_use or thinking blocks breaks the next request or loses state.",
         },
+        {
+          q: "A job creates a Message Batch and immediately tries to read model outputs from the create response, which contains none. What should it do?",
+          options: ["Retry the create call until outputs appear", "Poll the batch until processing_status is \"ended\", then read results from results_url", "Set stream: true on each batched request", "Read outputs from the request-id header"],
+          answer: [1],
+          explain: "Batches are asynchronous. The create call returns processing_status \"in_progress\". Poll until \"ended\", then stream the results file from results_url and match each result by custom_id.",
+        },
+        {
+          q: "Which TWO statements about the Message Batches API are correct? (Select 2)",
+          options: ["Requests that hit the 24-hour expiry come back as expired and are not billed", "Batched requests can use stream: true", "A batch can hold up to 100,000 requests or 256 MB", "Results are kept forever"],
+          answer: [0, 2],
+          explain: "Expired, errored and canceled requests aren't billed. A batch holds up to 100,000 requests or 256 MB, streaming isn't supported in batches, and results stay downloadable for 29 days.",
+        },
+        {
+          q: "A nightly job gets HTTP 429 rate_limit_error for hours, even after slowing down sharply. The response has no retry-after header. What does error.details.error_code most likely say?",
+          options: ["overloaded_error", "enforced_spend_limit_reached", "invalid_request_error", "request_too_large"],
+          answer: [1],
+          explain: "A tier spend cap returns a 429 with the rate_limit_error type but no retry-after header, and error_code enforced_spend_limit_reached. Retrying won't help until next month or a tier increase.",
+        },
       ],
     },
 
@@ -645,6 +672,10 @@ print(msg.content[0].text, msg.stop_reason, msg.usage)</code></pre>`,
 <li>Measure <strong>cost per completed task</strong>, not cost per request. A cheaper model that needs retries may cost more overall.</li>
 </ol>
 <p>Use exact model ID strings (for example <code>claude-sonnet-5-5</code>), and check the Models API (<code>GET /v1/models</code>) for context window, output limit and capabilities.</p>
+<ul>
+<li><strong>Pinning</strong>: from the 4.6 generation on, dateless IDs such as <code>claude-sonnet-4-6</code> are themselves pinned snapshots. For older models, an alias (e.g. <code>claude-sonnet-4-5</code>) points to a dated snapshot and can move. In production, pin a snapshot ID per environment and upgrade only after your evals pass.</li>
+<li>The Models API returns <code>max_input_tokens</code>, <code>max_tokens</code> and a <code>capabilities</code> object (e.g. which thinking types and server tools a model accepts) for every model. Read these at runtime instead of hard-coding limits.</li>
+</ul>
 <div class="tip">Exam pattern: "Real-time intent routing at huge volume" → Haiku. "Multi-hour autonomous refactor" → Opus or Fable.</div>`,
           checklist: [
             "I can match Opus / Sonnet / Haiku / Fable to typical use cases",
@@ -734,14 +765,17 @@ print(msg.content[0].text, msg.stop_reason, msg.usage)</code></pre>`,
 <h4>Thinking and effort</h4>
 <ul>
 <li><strong>Thinking tokens count toward <code>max_tokens</code></strong>. If thinking uses most of the budget, the visible answer is truncated. Fix it by raising <code>max_tokens</code> or lowering effort.</li>
-<li>Thinking is billed as output <strong>even when its display is omitted</strong>.</li>
+<li>Thinking is billed as output <strong>even when its display is omitted</strong>. On Opus 4.7 and later, <code>thinking.display</code> defaults to <code>"omitted"</code>: thinking blocks arrive with an empty <code>thinking</code> field plus a <code>signature</code>. Set <code>display: "summarized"</code> if you want readable summaries.</li>
+<li>To see how much of <code>output_tokens</code> went to reasoning, read <strong><code>usage.output_tokens_details.thinking_tokens</code></strong>. When streaming, it appears only on the final <code>message_delta</code>.</li>
 <li>With adaptive thinking, Claude may <strong>skip the thinking block</strong> on easy inputs. Treat thinking blocks as optional when parsing.</li>
 <li><strong>Effort is soft guidance</strong>, and <code>max_tokens</code> is the hard cap. Low effort doesn't guarantee zero thinking, and "adaptive" isn't an effort level.</li>
 <li><strong>Effort shapes all output</strong>, not just thinking. Lowering it also cuts verbosity, redundant tool calls and long preambles, even when thinking is off.</li>
 <li>On several recent models (e.g. Sonnet 5), <strong>thinking is on by default when <code>thinking</code> is omitted</strong>, which raises output tokens and latency. Set the thinking configuration explicitly.</li>
-<li>Thinking blocks from earlier turns stay in context and pile up as input tokens. The <code>clear_thinking</code> context-editing strategy, with a <code>keep</code> value, limits how many remain. Usage can also break out how many output tokens went to thinking, for cost attribution.</li>
+<li>Thinking blocks from earlier turns stay in context and pile up as input tokens. Opus 4.5 and models numbered 4.6 and later <strong>keep</strong> prior turns' thinking by default (billed as input); Sonnet 4.5, Haiku 4.5 and earlier strip it. That's why input grows faster after migrating to Sonnet 4.6. The <code>clear_thinking_20251015</code> context-editing strategy, with an explicit <code>keep</code> (e.g. <code>{type: "thinking_turns", value: 2}</code>), limits how many remain. Clearing thinking invalidates the cache from that point.</li>
 <li>Prompt caching cuts cost, but <strong>cached tokens still occupy the context window</strong>. Thinking, tool definitions and tool results all take space too, so curation matters more than headroom.</li>
-<li>Older models (e.g. <strong>Haiku 4.5</strong>) don't support adaptive thinking. They use <code>{type: "enabled", budget_tokens: N}</code>. <code>budget_tokens</code> is a ceiling, and you're billed for the tokens actually used.</li>
+<li>Older models (e.g. <strong>Haiku 4.5</strong>, Sonnet 4.5, Opus 4.5) don't support adaptive thinking (<code>type: "adaptive"</code> returns 400). They use <code>{type: "enabled", budget_tokens: N}</code>, minimum 1,024, less than <code>max_tokens</code>. <code>budget_tokens</code> is a target ceiling, and you're billed for the tokens actually used.</li>
+<li><strong>Which thinking mode, by model</strong>: Haiku 4.5 / Sonnet 4.5 / Opus 4.5 use <code>enabled</code> + <code>budget_tokens</code> only. Opus 4.6 / Sonnet 4.6 support adaptive, with <code>budget_tokens</code> deprecated but still accepted. <strong>Opus 4.7 and later reject <code>budget_tokens</code> with a 400</strong> and use adaptive + effort. Changing <code>budget_tokens</code> between requests invalidates the cache, just like changing effort.</li>
+<li>Forced tool use (<code>any</code>/<code>tool</code>) doesn't work with manual <code>enabled</code> thinking, and where it's accepted, a forced call skips thinking.</li>
 </ul>
 <h4>Cache invalidation: what breaks a hit</h4>
 <ul>
@@ -760,7 +794,7 @@ print(msg.content[0].text, msg.stop_reason, msg.usage)</code></pre>`,
 <li>Forced <code>tool_choice</code> (<code>any</code>/<code>tool</code>) works on most models but is rejected by the very newest (Opus 5.5, Sonnet 5.5, Fable 5.1).</li>
 <li>Re-run your eval suite before switching.</li>
 </ul>
-<div class="tip">Practice exams sometimes disagree with each other on version-specific details like these. For any specific model, trust the current docs. On the exam, choose the answer that matches the scenario's stated model.</div>
+<div class="tip">Practice exams sometimes disagree with each other on version-specific details like these. For any specific model, trust the current docs. On the exam, choose the answer that matches the scenario's stated model. Version cutoffs to memorise: prefill rejected from <strong>4.6</strong>; <code>budget_tokens</code> rejected and new tokenizer from <strong>4.7</strong>; sampling params rejected on <strong>4.7+</strong> thinking models and the 5.x line; forced <code>tool_choice</code> rejected on <strong>Opus 5.5 / Sonnet 5.5 / Fable 5.1</strong>.</div>
 <h4>Choosing up or down</h4>
 <ul>
 <li>Accuracy target met but latency or cost too high: test a <strong>faster, cheaper model</strong> against your evals. Model choice is usually the biggest lever.</li>
@@ -896,6 +930,24 @@ print(msg.content[0].text, msg.stop_reason, msg.usage)</code></pre>`,
           answer: [0],
           explain: "Tokenizers can change between generations. Re-baseline with count_tokens after a migration.",
         },
+        {
+          q: "A team wants to attribute how many billed output tokens went to reasoning on an adaptive-thinking model. Which field should they read?",
+          options: ["usage.cache_creation_input_tokens", "usage.output_tokens_details.thinking_tokens", "The length of the thinking block's text", "usage.input_tokens"],
+          answer: [1],
+          explain: "output_tokens_details.thinking_tokens reports reasoning tokens within output_tokens. The thinking text may be empty (display omitted) even though those tokens are billed.",
+        },
+        {
+          q: "A request to Claude Opus 4.7 uses thinking: {type: \"enabled\", budget_tokens: 8000} and fails with a 400. What fixes it?",
+          options: ["Lower budget_tokens below 1,024", "Switch to thinking: {type: \"adaptive\"} and control depth with output_config.effort", "Add a beta header", "Raise temperature"],
+          answer: [1],
+          explain: "Opus 4.7 and later reject manual extended thinking. Use adaptive thinking and steer depth with effort. budget_tokens is deprecated on the 4.6 models and is the only mode on Haiku 4.5 and the other 4.5 models.",
+        },
+        {
+          q: "After migrating from Sonnet 4.5 to Sonnet 4.6 with thinking on, input tokens grow much faster each turn. Why?",
+          options: ["Sonnet 4.6 keeps earlier turns' thinking blocks in context by default, billed as input", "Sonnet 4.6 disables prompt caching", "max_tokens now counts as input", "Tool definitions are sent twice"],
+          answer: [0],
+          explain: "Models numbered 4.6 and later (and Opus 4.5) keep prior thinking blocks. Sonnet 4.5 stripped them. Use clear_thinking_20251015 with an explicit keep value to limit them.",
+        },
       ],
     },
 
@@ -998,6 +1050,34 @@ for _ in range(MAX_TURNS):                 # always bound the loop
 <li>The SDK reads <code>ANTHROPIC_API_KEY</code> from the <strong>process environment</strong>. It doesn't auto-load <code>.env</code>, so export the key or load it yourself (e.g. python-dotenv).</li>
 <li>From other languages (e.g. Go), run the Claude Code CLI as a subprocess: <code>claude -p "..." --output-format json</code>.</li>
 <li>It supports hooks, permissions, subagents, skills and MCP, just like Claude Code.</li>
+<li>ClaudeSDKClient usage: <code>async with ClaudeSDKClient(options) as client:</code> → <code>await client.query("...")</code> → iterate <code>client.receive_response()</code>. Call <code>client.interrupt()</code> to stop the running turn, then send a follow-up query in the same session.</li>
+</ul>
+<h4>Agent SDK hooks (callbacks)</h4>
+<p>Hooks are callbacks that run your code <strong>deterministically</strong> at lifecycle events (<code>PreToolUse</code>, <code>PostToolUse</code>, <code>PostToolUseFailure</code>, <code>UserPromptSubmit</code>, <code>Stop</code>, <code>SubagentStart/Stop</code>, <code>PreCompact</code>, <code>PermissionRequest</code>, <code>Notification</code>…). They don't depend on the model complying.</p>
+<pre><code>async def guard(input_data, tool_use_id, context):
+    if "prod.creds" in input_data["tool_input"].get("command", ""):
+        return {"hookSpecificOutput": {
+            "hookEventName": input_data["hook_event_name"],
+            "permissionDecision": "deny",          # allow | deny | ask | defer
+            "permissionDecisionReason": "Production credentials are off-limits"}}
+    return {}                                    # {} = allow unchanged
+
+options = ClaudeAgentOptions(hooks={
+    "PreToolUse": [HookMatcher(matcher="Bash", hooks=[guard])]})</code></pre>
+<ul>
+<li>The <code>matcher</code> matches the <strong>tool name</strong> only (e.g. <code>"Write|Edit"</code>, <code>"^mcp__"</code>). To filter by file path or command, inspect <code>tool_input</code> inside the callback.</li>
+<li><code>permissionDecisionReason</code> is shown to the model. <code>systemMessage</code> is shown to the user. <code>updatedInput</code> rewrites the tool input before it runs.</li>
+<li>When several hooks disagree, the most restrictive decision wins: <strong>deny &gt; defer &gt; ask &gt; allow</strong>.</li>
+<li>A <code>PostToolUse</code> hook runs after the tool has run, so it can't block it. It can add <code>additionalContext</code> or replace the output with <code>updatedToolOutput</code>.</li>
+<li>Claude Code shell hooks block with exit code 2. SDK callbacks block by returning <code>permissionDecision: "deny"</code>.</li>
+</ul>
+<h4>Managed Agents concepts</h4>
+<ul>
+<li><strong>Agent</strong>: model, system prompt, tools, MCP servers, skills. You create it once and reference it by ID.</li>
+<li><strong>Environment</strong>: where sessions run, either an Anthropic-managed cloud sandbox or a <strong>self-hosted sandbox</strong> on your own infrastructure (for compliance or data residency).</li>
+<li><strong>Session</strong>: a running agent instance in an environment, stateful, with history and filesystem kept server-side.</li>
+<li><strong>Events</strong>: what your app and the agent exchange (user turns, tool results, status), streamed over SSE. To <strong>steer</strong> a running session, send more user events; you can also interrupt it.</li>
+<li>Custom tools arrive as <code>agent.custom_tool_use</code> events, and you reply with <code>user.custom_tool_result</code>. Every request needs the <code>managed-agents-2026-04-01</code> beta header (the SDK sets it).</li>
 </ul>
 <h4>Agentic frameworks</h4>
 <p>Frameworks provide scaffolding (tool dispatch, state management, model calls) that saves development time. They <strong>don't</strong> guarantee deterministic behaviour, write your prompts or host your infrastructure, and their abstractions can hide what's actually sent. Understand the underlying calls.</p>
@@ -1143,6 +1223,18 @@ for _ in range(MAX_TURNS):                 # always bound the loop
           answer: [0],
           explain: "Independent subtasks can run concurrently and be aggregated.",
         },
+        {
+          q: "In the Agent SDK, how does a PreToolUse callback hook block a Bash command?",
+          options: ["Exit with code 2", "Return hookSpecificOutput with permissionDecision: \"deny\" and a permissionDecisionReason", "Raise an exception in the model", "Return {}"],
+          answer: [1],
+          explain: "SDK callbacks return a decision object. Returning {} allows the call. Exit code 2 is how Claude Code shell-command hooks block.",
+        },
+        {
+          q: "A Managed Agents team must run every command and store every file on infrastructure they operate, without building their own loop. What do they configure?",
+          options: ["A self-hosted sandbox environment that sessions reference", "A higher effort level", "The Message Batches API", "A system prompt saying not to use the cloud"],
+          answer: [0],
+          explain: "An environment defines where sessions run: an Anthropic cloud sandbox or a self-hosted sandbox. The harness stays managed while execution stays on your infrastructure.",
+        },
       ],
     },
 
@@ -1249,7 +1341,7 @@ for _ in range(MAX_TURNS):                 # always bound the loop
 <li><strong>Remove carried-over scaffolding.</strong> "Double-check every step" instructions written for older models cause redundant re-checking on models like Opus 5, which already reason thoroughly.</li>
 <li><strong>Spell out implicit conventions.</strong> Claude doesn't know your team's "standard format". List the exact sections, ordering and conventions.</li>
 <li><strong>Scope the change.</strong> "Limit edits to what the fix requires" keeps diffs focused and reviewable.</li>
-<li><strong>Prefill is gone on recent models</strong> (Sonnet 4.6+ and later). Use structured outputs for JSON. On older models, appending a partial response as a trailing assistant message lets Claude resume exactly where it stopped. On newer ones, send the partial output back and ask Claude to continue.</li>
+<li><strong>Prefill is gone on recent models</strong> (Sonnet 4.6+ and later). Use structured outputs for JSON. For an <strong>interrupted stream</strong> on <strong>Claude 4.5 and earlier</strong>, send the partial text as a trailing assistant message and Claude resumes exactly where it stopped. On <strong>Claude 4.6 and later</strong> (including Opus 5 and 5.5), a trailing assistant message is rejected. Instead, send a <em>user</em> message containing the partial text and an instruction such as "Your previous response was interrupted and ended with […]. Continue from where you left off." Tool-use and thinking blocks can't be partially recovered; resume from the latest text block.</li>
 <li><strong>Sampling parameters</strong>: Opus 4.7+ models with thinking don't accept <code>temperature</code> or <code>top_p</code>. Guide consistency with instructions instead.</li>
 </ul>`,
           checklist: [
@@ -1349,6 +1441,12 @@ for _ in range(MAX_TURNS):                 # always bound the loop
           ],
           answer: [1],
           explain: "External memory survives compaction and new sessions.",
+        },
+        {
+          q: "A stream from Claude Opus 5 drops after thousands of tokens. How do you recover without regenerating everything?",
+          options: ["Append the partial text as a trailing assistant message", "Send a user message containing the partial text and ask Claude to continue from where it left off", "Resubmit through the Batches API", "Rely on SDK retries to resend the missing tokens"],
+          answer: [1],
+          explain: "From Claude 4.6 on, a trailing assistant message (prefill) is rejected. The documented recovery is a user message with the partial response and a continue instruction. The prefill-style continuation applies to Claude 4.5 and earlier only.",
         },
       ],
     },
@@ -1522,7 +1620,8 @@ mcp.run()  # stdio by default</code></pre>
           body: `
 <h4>Tool definitions</h4>
 <ul>
-<li>Schema-valid inputs but wrong formats (e.g. dates)? Add <strong><code>input_examples</code></strong> to the tool definition, because examples show formats better than descriptions do.</li>
+<li>Schema-valid inputs but wrong formats (e.g. dates)? Add <strong><code>input_examples</code></strong> to the tool definition, because examples show formats better than descriptions do. Each example must validate against <code>input_schema</code>, or the request returns 400. They work on user-defined (and most Anthropic-schema client) tools, but <strong>not on server tools</strong> such as web search or code execution. Each one costs about 20–200 prompt tokens.</li>
+<li>Descriptions matter most: aim for at least 3–4 sentences per tool, covering what it does, when to use it (and when not to), what each parameter means, and its caveats.</li>
 <li><strong>Service-prefixed names</strong> (<code>github_search</code>, <code>jira_search</code>) keep tool choice unambiguous when services have similar operations. Consolidate related operations, and keep descriptions detailed.</li>
 <li><code>tool_choice</code>: <code>auto</code> (default) | <code>any</code> | <code>{type: "tool", name}</code> (forces that tool) | <code>none</code>. A forced tool is a classic way to get guaranteed structured JSON. <code>strict: true</code> controls schema conformance, <em>not</em> whether the tool gets called. For chat that sometimes needs tools, don't use <code>any</code> (it breaks conversational turns); tell Claude in the system prompt to consult tools before answering. The very newest models reject forced choice.</li>
 <li><strong>Structured outputs schema limits</strong>: some JSON Schema features (e.g. recursive <code>$ref</code>, numeric min/max) aren't supported. Remove them and enforce those rules in application validation.</li>
@@ -1665,6 +1764,12 @@ mcp.run()  # stdio by default</code></pre>
           answer: [0],
           explain: "Project-scope servers live in .mcp.json, committed so the whole team gets them.",
         },
+        {
+          q: "Where can you use input_examples? (Select 2)",
+          options: ["On a user-defined custom tool with nested, format-sensitive inputs", "On the web_search server tool", "On the code execution server tool", "On an Anthropic-schema client tool such as the text editor tool"],
+          answer: [0, 3],
+          explain: "input_examples work on user-defined and most Anthropic-schema client tools, and must validate against input_schema. They aren't supported on server tools such as web search or code execution.",
+        },
       ],
     },
 
@@ -1743,7 +1848,7 @@ mcp.run()  # stdio by default</code></pre>
 <li><strong>File paths</strong>: canonicalize (resolve to an absolute real path), then check that the result is inside the allowed directory. String-matching <code>../</code> can be bypassed.</li>
 <li><strong>Client-side memory tool</strong>: enforce path-traversal prevention, validate content, and cap file sizes.</li>
 <li><strong>Network egress</strong>: hostname allowlists don't inspect TLS traffic. For strong exfiltration control, add a <strong>TLS-terminating proxy</strong> that can inspect content.</li>
-<li><strong>Untrusted content</strong> (OCR text, web pages, emails): return it in <code>tool_result</code> blocks, and state in the system prompt that tool results are untrusted data, not instructions.</li>
+<li><strong>Untrusted content</strong> (OCR text, web pages, emails): return it in <code>tool_result</code> blocks (JSON-encoding the strings keeps them clearly data), and state in the system prompt that tool results are untrusted data, not instructions. Never concatenate it into the system prompt.</li>
 <li><strong>Credentials</strong>: keep them in server-side tool implementations, never in prompts.</li>
 <li><strong>Least privilege</strong>: give subagents read-only tools, and give agents scoped credentials.</li>
 <li><strong>Claude Code enforcement</strong>: <code>permissions.deny</code> rules, managed settings and <code>PreToolUse</code> hooks are hard controls. CLAUDE.md is soft guidance. A <code>PostToolUse</code> hook runs <em>after</em> the action, which is too late to block it.</li>
@@ -1887,7 +1992,7 @@ mcp.run()  # stdio by default</code></pre>
 </tbody></table>
 <ul>
 <li>CLAUDE.md files in the working directory and its <strong>ancestor directories</strong> load at launch and are concatenated. A monorepo root file sets shared conventions, and a package file adds team rules. Files in subdirectories <em>below</em> the working directory load on demand when Claude works there.</li>
-<li><strong>AGENTS.md</strong>: the documented way to reuse it is an <code>@AGENTS.md</code> import at the top of CLAUDE.md, with Claude-specific rules below. Newer versions may also discover AGENTS.md automatically, and the practice exams disagree on this. Know both answers.</li>
+<li><strong>AGENTS.md</strong>: by default Claude Code reads <code>AGENTS.md</code> <em>only when there's no</em> <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code> or <code>CLAUDE.local.md</code> in the working directory or above it. With no CLAUDE.md, no import or setting is needed. If you also want Claude-specific rules, create a CLAUDE.md that starts with <code>@AGENTS.md</code> and add the rules below. Creating any CLAUDE.md (even CLAUDE.local.md) stops automatic AGENTS.md loading. <code>~/.claude/CLAUDE.md</code>, managed CLAUDE.md and <code>.claude/rules/</code> don't count toward that check.</li>
 <li>Keep instructions specific and verifiable, and move rarely used procedures into skills.</li>
 </ul>
 <h4>Settings</h4>
@@ -1901,9 +2006,12 @@ mcp.run()  # stdio by default</code></pre>
 <h4>CLI flags for automation</h4>
 <ul>
 <li><code>-p</code> runs non-interactively, and <code>--output-format json</code> gives machine-readable output. Any language can call the CLI as a subprocess.</li>
-<li><strong><code>--bare</code></strong> skips auto-discovery of hooks, plugins, MCP servers, auto memory and CLAUDE.md, for reproducible CI runs across machines. Pair it with <code>ANTHROPIC_API_KEY</code>.</li>
+<li><strong><code>--bare</code></strong> skips auto-discovery of hooks, plugins, MCP servers, auto memory and CLAUDE.md, for reproducible CI runs across machines. Bare mode <strong>never reads OAuth credentials or the system keychain</strong>, so set <code>ANTHROPIC_API_KEY</code> (or an <code>apiKeyHelper</code> in <code>--settings</code>). Pass whatever you do need explicitly: <code>--settings</code>, <code>--mcp-config</code>, <code>--agents</code>, <code>--plugin-dir</code>, <code>--append-system-prompt</code>.</li>
+<li>Without <code>--bare</code>, a <code>-p</code> run executes the repo's <code>.claude/settings.json</code> hooks and connects its <code>.mcp.json</code> servers <strong>with no workspace trust dialog</strong>. The trust dialog only appears in interactive sessions, so it's no control for CI.</li>
+<li><code>--settings &lt;file-or-json&gt;</code> overrides settings keys for one run, e.g. <code>claude -p --settings '{"disableAllHooks": true}' "..."</code>.</li>
+<li>Other automation flags: <code>--max-turns</code>, <code>--max-budget-usd</code>, <code>--allowedTools</code> / <code>--disallowedTools</code>, <code>--permission-mode</code> (<code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>auto</code>, <code>dontAsk</code>, <code>bypassPermissions</code>), and <code>--json-schema</code> with <code>--output-format json</code> for validated <code>structured_output</code>.</li>
 <li><strong><code>--append-system-prompt</code></strong> <em>adds</em> to Claude Code's default prompt, keeping its built-in behaviour. <code>--system-prompt</code> <em>replaces</em> it entirely.</li>
-<li><code>-c</code> / <code>-r</code> continue or resume a session. Forking explores an alternative while keeping the original.</li>
+<li><code>-c</code> continues the most recent conversation, and <code>-r &lt;id|name&gt;</code> resumes a specific one. Add <strong><code>--fork-session</code></strong> (with <code>--resume</code> or <code>--continue</code>) to copy the history into a <strong>new session ID</strong> and explore an alternative, keeping the original intact.</li>
 </ul>
 <h4>Plugins</h4>
 <p>Plugins bundle commands, skills, subagents, hooks and MCP servers. While developing, load a local plugin with <code>--plugin-dir</code> and pick up changes with <code>/reload-plugins</code>, no restart needed.</p>`,
@@ -2024,6 +2132,24 @@ mcp.run()  # stdio by default</code></pre>
           ],
           answer: [0, 2],
           explain: "Subagents, skills, commands, hooks and MCP servers are the extension points.",
+        },
+        {
+          q: "A developer wants to try an alternative approach from an existing Claude Code session while keeping the original session intact. Which command fits?",
+          options: ["claude -c", "claude --resume <id> --fork-session", "claude --bare", "claude /clear"],
+          answer: [1],
+          explain: "--fork-session (with --resume or --continue) copies the history into a new session ID. Plain resume would keep appending to the original.",
+        },
+        {
+          q: "A repo has an AGENTS.md and no CLAUDE.md. A developer adds a CLAUDE.local.md with personal notes, and Claude stops following AGENTS.md. Why?",
+          options: ["CLAUDE.local.md is invalid", "AGENTS.md loads automatically only when no CLAUDE.md, .claude/CLAUDE.md or CLAUDE.local.md exists in the working directory or above it", "AGENTS.md needs a settings.json entry", "Claude Code never reads AGENTS.md"],
+          answer: [1],
+          explain: "Any project CLAUDE.md file, including CLAUDE.local.md, turns off automatic AGENTS.md loading. Import it with @AGENTS.md, or set Project instructions to claude-md-and-agents-md.",
+        },
+        {
+          q: "A CI job runs claude --bare -p on runners where developers normally sign in with their subscription. The run fails authentication. Why?",
+          options: ["--bare requires a plugin", "Bare mode never reads OAuth credentials or the keychain; set ANTHROPIC_API_KEY or an apiKeyHelper", "--bare disables the Bash tool", "-p can't be combined with --bare"],
+          answer: [1],
+          explain: "Bare mode skips OAuth and the keychain. Provide ANTHROPIC_API_KEY (or apiKeyHelper via --settings). Bedrock, Vertex and Foundry credentials still load as usual.",
         },
       ],
     },

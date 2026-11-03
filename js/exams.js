@@ -1820,10 +1820,10 @@ window.CCDV_EXAMS = [
      "Group related operations such as create, review, and merge into one tool with an action parameter."
     ],
     "answer": [
-     0,
-     1
+     1,
+     3
     ],
-    "explain": "Prefixing tool names with the service name keeps selection unambiguous across services, and input_examples help Claude format calls correctly. Descriptions should be detailed enough to be useful, and grouping unrelated operations reduces clarity."
+    "explain": "Prefixing tool names with the owning service keeps selection unambiguous, and consolidating related operations into one tool with an action parameter reduces selection ambiguity (both are in Anthropic's tool definition guidance). input_examples are not supported on server tools such as web search, and one-sentence descriptions are too brief; aim for 3-4 sentences."
    },
    {
     "q": "A Claude application declares two tools in a Messages API request: the web_search server tool and a custom get_inventory tool defined with its own input_schema. Claude calls both during a turn. What must the application execute?",
@@ -2222,10 +2222,10 @@ window.CCDV_EXAMS = [
      "Keep manual extended thinking with budget_tokens unchanged, since that configuration remains accepted on every current model."
     ],
     "answer": [
-     1,
-     3
+     0,
+     1
     ],
-    "explain": "Claude 4.7+ uses a newer tokenizer producing ~30% more tokens for the same text, so prompts must be recounted. Manual extended thinking with budget_tokens continues to work across models. Temperature/top_p/top_k are still supported, and effort parameter is valid on newer models."
+    "explain": "Claude 4.7+ models reject non-default temperature, top_p and top_k on thinking models, and use a newer tokenizer that produces up to ~35% more tokens for the same text, so prompts must be recounted. Manual extended thinking (budget_tokens) is rejected with a 400 on Claude 4.7 and later, and effort is supported."
    },
    {
     "q": "A document analysis service uses the Files API to store uploads from many customer tenants and references them in later Messages requests. No tenant may ever be able to read another tenant's files. Which design provides hard isolation?",
@@ -3115,9 +3115,9 @@ window.CCDV_EXAMS = [
      "Save the text received so far and append it as a trailing assistant message so the model resumes generating exactly at the point where that message ends."
     ],
     "answer": [
-     3
+     1
     ],
-    "explain": "Appending the partial response as a trailing assistant message lets the model resume generation from exactly where it left off, without regenerating the already-received content."
+    "explain": "From Claude 4.6 on, a trailing assistant message (prefill) is rejected. Anthropic's documented stream recovery for 4.6+ models is to send a user message containing the partial response with an instruction to continue from where it left off. The trailing-assistant-message approach applies only to Claude 4.5 and earlier."
    },
    {
     "q": "A production report-generation service lists a custom Skill in container.skills with version set to \"latest\". A colleague in the same workspace uploads a new version of that Skill, and production output changes the same day with no deployment. Which configuration change prevents this class of incident?",

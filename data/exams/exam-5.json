@@ -285,8 +285,8 @@
         "C": "Resend the original request unchanged and rely on the SDK's automatic retry behavior to deliver the tokens that were cut off when the connection dropped.",
         "D": "Save the text received so far and append it as a trailing assistant message so the model resumes generating exactly at the point where that message ends."
       },
-      "correct_answer": "D",
-      "explanation": "Appending the partial response as a trailing assistant message lets the model resume generation from exactly where it left off, without regenerating the already-received content."
+      "correct_answer": "B",
+      "explanation": "From Claude 4.6 on, a trailing assistant message (prefill) is rejected. Anthropic's documented stream recovery for 4.6+ models is to send a user message containing the partial response with an instruction to continue from where it left off. The trailing-assistant-message approach applies only to Claude 4.5 and earlier."
     },
     {
       "number": 23,
